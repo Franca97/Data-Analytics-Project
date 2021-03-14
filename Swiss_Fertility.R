@@ -20,10 +20,18 @@ Rel.Freq_Education = mydata[,4]/length(mydata)
 Rel.Freq_Catholic = mydata[,5]/length(mydata)
 Rel.Freq_InfantMortality = mydata[,6]/length(mydata)
 
-# Boxplots 
+#' Summary 
+summary(mydata)
+ 
+#' Boxplot
 boxplot(mydata)
 
-# Correlations 
-cor(mydata)
+#' Histogram 
+hist(mydata$Fertility,main="Fertility",xlab="Fertility") # Fertility rates are mostly between 60 and 90% 
 
-### Simple Linear Regression 
+
+#'  Correlations 
+cor(mydata) # correlations with response variable lower than .8. No multicollinearity. 
+pairs(mydata) # assumption: linear relationship between education and examination/examination and agriculture 
+
+ 
