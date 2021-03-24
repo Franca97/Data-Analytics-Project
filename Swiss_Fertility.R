@@ -24,6 +24,7 @@ Rel.Freq_InfantMortality = mydata[,6]/length(mydata)
 
 #' Summary 
 summary(mydata)
+summary(mydata)
  
 #' Boxplot
 boxplot(mydata)
