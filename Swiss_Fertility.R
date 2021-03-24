@@ -1,6 +1,8 @@
 # Packages
 #install.packages("datasets.load")
 library(datasets.load)
+library(tidyverse)
+library(ggplot2)
 
 # Setting Working Directory 
 setwd("~/Library/Mobile Documents/com~apple~CloudDocs/Documents/GitHub/Data-Analytics-Project")
@@ -26,8 +28,11 @@ summary(mydata)
 #' Boxplot
 boxplot(mydata)
 
-#' Histogram 
+#' Histogram: Distribution 
 hist(mydata$Fertility,main="Fertility",xlab="Fertility") # Fertility rates are mostly between 60 and 90% 
+
+#' Density Plot of response variable 
+plot(density(mydata$Fertility), main = "Fertility") # a little bit right skewed 
 
 
 #'  Correlations 
