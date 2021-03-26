@@ -1,71 +1,117 @@
-# Packages
-#install.packages("datasets.load")
+###################################################################################
+############################# Swiss Fertility #####################################
+###################################################################################
+
+#### Loading all the relevant packages and data ####
+install.packages("datasets.load")
 library(datasets.load)
 library(tidyverse)
 library(ggplot2)
 library(dplyr)
 
-# Setting Working Directory 
-setwd("~/Library/Mobile Documents/com~apple~CloudDocs/Documents/GitHub/Data-Analytics-Project")
 
-# Dataset: Swiss 
+#### Getting an overview of the Swiss Fertility dataset #### 
 help(swiss)
 View(swiss)
 mydata <- swiss 
 
-### Descriptive Statistics 
 
-# Relative Frequencies 
-Rel.Freq_Fertility = mydata[,1]/length(mydata)
-Rel.Freq_Agriculture = mydata[,2]/length(mydata)
-Rel.Freq_Examination = mydata[,3]/length(mydata)
-Rel.Freq_Education = mydata[,4]/length(mydata)
-Rel.Freq_Catholic = mydata[,5]/length(mydata)
-Rel.Freq_InfantMortality = mydata[,6]/length(mydata)
+#### Re-naming the relevant variables for easier access ####
+Fertility <- mydata$Fertility
+Agriculture <- mydata$Agriculture
+Examination <- mydata$Examination
+Education <- mydata$Education
+Catholic <- mydata$Catholic
+InfantMortality <- mydata$Infant.Mortality
 
-#' Summary 
+
+################################
+#### Descriptive Statistics ####
+################################
+
+#### Getting a general overview of the data #### 
 summary(mydata)
 
-#' Boxplot
+
+#### Drawing a boxplot for first inspection ####
 boxplot(mydata)
 
-#' Histogram: Distribution 
-hist(mydata$Fertility,main="Fertility",xlab="Fertility") # Fertility rates are mostly between 60 and 90% 
 
-#' Density Plot of response variable 
-plot(density(mydata$Fertility), main = "Fertility") # a little bit right skewed 
+#### Calculating the relative frequencies #### <- evtl. löschen, da beinahe keine Werte mehrmals. Evtl mit Intervallen arbeiten? 
+Rel.Freq_Fertility = Fertility / length(mydata)
+Rel.Freq_Agriculture = Agriculture / length(mydata)
+Rel.Freq_Examination = Examination / length(mydata)
+Rel.Freq_Education = Education / length(mydata)
+Rel.Freq_Catholic = Catholic / length(mydata)
+Rel.Freq_InfantMortality = InfantMortality / length(mydata)
 
-#'  Correlations 
+## Creating frequency brackets for analysis ##
+lower_bound <- 60  ## defining the lower bound as 60 ##
+upper_bound <- 90  ## defining the upper bound as 90 ##
+Fertility_low <- c(Fertility <= lower_bound)  ## defining low fertility as values below the lower bound ##
+Fertility_average <- between(Fertility, lower_bound, upper_bound)  ## defining average fertility as values between the lower and the upper bound ##
+Fertility_high <- c(Fertility >= upper_bound)  ## defining high fertility as values above the upper bound ##
+
+Rel.Freq_Fertility_low <- sum(Fertility_low) / length(Fertility)  ## calculating the relative frequency of low fertility ##
+Rel.Freq_Fertility_average <- sum(Fertility_average) / length(Fertility)  ## calculating the relative frequency of average fertility ##
+Rel.Freq_Fertility_high <- sum(Fertility_high) / length(Fertility)  ## calculating the relative frequency of high fertility ##
+
+print(Rel.Freq_Fertility_low)
+print(Rel.Freq_Fertility_average)
+print(Rel.Freq_Fertility_high)
+
+
+#### Histogram: Distribution ####
+hist(Fertility, main = "Fertility", xlab = "Fertility") # Fertility rates are mostly between 60 and 90% 
+
+
+#### Density Plot of response variable #### 
+plot(density(Fertility), main = "Fertility") # a little bit right skewed 
+
+
+#### Inspecting and plotting the covariance and correlation #### 
+cov(mydata)
 cor(mydata) # correlations with response variable lower than .8. 
+
+## Plotting the correlation matrix ##
+require(lattice)
+levelplot(cor(mydata), xlab = "", ylab = "")
+
+## General plot of all variables ##
 pairs(mydata) # assumption: linear relationship between education and examination/examination and agriculture 
 
 
-## Exploring Data
+################################
+###### Exploring the Data ######
+################################
 
-#' Top 10 Provinces with high fertility 
+#### Ranking of cities with regards to fertility rates ####
+## Top 10 provinces with high fertility ## 
 mydata %>% 
   select(Fertility) %>% 
   arrange(desc(Fertility)) %>% 
   head(10)
 
-#' Top 10 Provinces with low fertility 
+## Top 10 provinces with low fertility ## 
 mydata %>% 
   select(Fertility) %>% 
   arrange(desc(Fertility)) %>% 
   tail(10) # Cities: Geneve, Lausanne, Nyone 
 
-#' Relationship Agriculture Fertility
+
+#### Mapping relationships between different variables (with simple regression model) ####
+## Relationship Agriculture Fertility ##
 mydata %>%  
   ggplot() +
   geom_point(mapping = aes(x = Agriculture, y = Fertility)) +
   geom_smooth(mapping = aes(x = Agriculture, y = Fertility),
               method = "lm") 
 
-#' Relationship Examination Fertility
+## Relationship Examination Fertility ##
 mydata %>%  
   ggplot() +
   geom_point(mapping = aes(x = Examination, y = Fertility)) +
-  geom_smooth(mapping = aes(x = Examination, y = Fertility),
+  geom_smooth(mapping = aes(x = Examination, y = Fertility), 
               method = "lm") 
 
 mydata %>%
@@ -83,29 +129,42 @@ mydata %>%
     y = Fertility),
     method = "lm")
 
-#' Relationship Education Fertility
+## Relationship Education Fertility ##
+# Advanced model #
 mydata %>%  
   ggplot() +
   geom_point(mapping = aes(x = Education, y = Fertility)) +
-  geom_smooth(mapping = aes(x = Education, y = Fertility),
-              method = "lm") 
+  geom_smooth(mapping = aes(x = Education, y = Fertility), 
+              method = "lm") + 
+  ylim(0, 100)
+# Simple model #
+plot(x = Fertility, xlab = "Fertility", xlim = c(0,100), y = Education, ylab = "Education", 
+     main = "Swiss Fertility and Education Indicators", pch = 19, col="black")
+simple.regression_FertilityEdcuation <- lm(Fertility ~ Education, data = swiss)
+abline(simple.regression_FertilityEdcuation, col = "red")
+# Axis inverted for visual inspection #
+plot(x = Education, xlab = "Education", y = Fertility, ylab = "Fertility", ylim = c(0,100), 
+     main = "Swiss Fertility and Education Indicators", pch = 19, col="black")
+abline(simple.regression_FertilityEdcuation, col = "red")
 
-#' Relationship Catholic Fertility
+## Relationship Catholic Fertility ##
 mydata %>%  
   ggplot() +
   geom_point(mapping = aes(x = Catholic, y = Fertility)) +
-  geom_smooth(mapping = aes(x = Catholic, y = Fertility),
+  geom_smooth(mapping = aes(x = Catholic, y = Fertility), 
               method = "lm") # Two regions as either high in catholic or low 
 
-#' Relationship Infant Mortality Fertility
+## Relationship Infant Mortality Fertility ##
 mydata %>%  
   ggplot() +
   geom_point(mapping = aes(x = Infant.Mortality, y = Fertility)) +
-  geom_smooth(mapping = aes(x = Infant.Mortality, y = Fertility),
+  geom_smooth(mapping = aes(x = Infant.Mortality, y = Fertility), 
               method = "lm")
 
 
-### Empirical Analysis
+################################
+######## Model analysis ########
+################################
 
 ## Full Model 
 Reg_full <- lm(Fertility ~  Agriculture + Education + Examination + Catholic + Infant.Mortality, data = mydata)
