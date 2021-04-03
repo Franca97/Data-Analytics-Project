@@ -8,6 +8,9 @@ library(datasets.load)
 library(tidyverse)
 library(ggplot2)
 library(dplyr)
+library(lattice)
+library(plotly)
+library(knitr)
 
 
 #### Getting an overview of the Swiss Fertility dataset #### 
@@ -17,6 +20,7 @@ mydata <- swiss
 
 
 #### Re-naming the relevant variables for easier access ####
+attach(mydata) # Kommentar Franca: attach(mydata) wir kÃ¶nnten auch nur diesen Code verwenden  anstatt sechs variablen machen
 Fertility <- mydata$Fertility
 Agriculture <- mydata$Agriculture
 Examination <- mydata$Examination
@@ -30,7 +34,7 @@ InfantMortality <- mydata$Infant.Mortality
 ################################
 
 #### Getting a general overview of the data #### 
-summary(mydata)
+summary(mydata) # Franca Kommentar: Catholic: Median and Mean are completely different, also high sd (41)
 
 
 #### Drawing a boxplot for first inspection ####
@@ -38,15 +42,25 @@ summary(mydata)
 boxplot(mydata)
 
 
-#### Calculating the relative frequencies #### <- evtl. löschen, da beinahe keine Werte mehrmals. Evtl mit Intervallen arbeiten? 
-# Müssten wir nicht die Variablen durch die Anzahl der Beobachtungen teilen?
-# length(mydata)=6. D.h. wir müssten wenn dann z.B. Fertility/length(mydata$fertility) berechnen?
+#### Calculating the relative frequencies #### <- evtl. l?schen, da beinahe keine Werte mehrmals. Evtl mit Intervallen arbeiten? Kommentar Franca: Ja, bei continous variable oder vielen values macht es keinen Sinn, Intervalle sinnvoller 
+# table(VARIABLE) Examination und Education einzige Variablen mit gleichen Variablen 
+# M?ssten wir nicht die Variablen durch die Anzahl der Beobachtungen teilen? 
+# length(mydata)=6. D.h. wir m?ssten wenn dann z.B. Fertility/length(mydata$fertility) berechnen? 
+
 Rel.Freq_Fertility = Fertility / length(mydata$Fertility)
 Rel.Freq_Agriculture = Agriculture / length(mydata)
 Rel.Freq_Examination = Examination / length(mydata)
 Rel.Freq_Education = Education / length(mydata)
 Rel.Freq_Catholic = Catholic / length(mydata)
 Rel.Freq_InfantMortality = InfantMortality / length(mydata)
+
+### Empirical Distribution Function Plots ###
+plot.ecdf(Fertility, main = "Empirical Distribution Function Fertility")
+plot.ecdf(Agriculture, main="Empirical Distribution Function Agriculture")
+plot.ecdf(Examination, main = "Empirical Distribution Function Examination")
+plot.ecdf(Catholic, main = "Empirical Distribution Function Catholic") # looks like binary 
+plot.ecdf(Infant.Mortality, main = "Empirical Distribution Function Infant Mortality")
+
 
 ## Creating frequency brackets for analysis ##
 # Warum diese Ober- und Untergrenze?
@@ -104,7 +118,7 @@ mydata %>%
   tail(10) # Cities: Geneve, Lausanne, Nyone 
 
 
-#### Mapping relationships between different variables (with simple regression model) ####
+#### Mapping relationships between different variables IV und DV (with simple regression model) ####
 ## Relationship Agriculture Fertility ##
 mydata %>%  
   ggplot() +
@@ -142,6 +156,8 @@ mydata %>%
   geom_smooth(mapping = aes(x = Education, y = Fertility), 
               method = "lm") + 
   ylim(0, 100)
+
+
 # Simple model #
 # I have changed the axes
 plot(y = Fertility, ylab = "Fertility", ylim = c(0,100), x = Education, xlab = "Education", 
@@ -155,6 +171,10 @@ plot(x = Education, xlab = "Education", y = Fertility, ylab = "Fertility", ylim 
 abline(simple.regression_FertilityEdcuation, col = "red")
 
 ## Relationship Catholic Fertility ##
+# correlation between provinces with a greater proportion of catholic and high fertility rates 
+# Provinces which are catholic show the highest fertility rates
+# Provinces with an equaly share of catholics and protestants (50%) have a low fertility rate 
+# Provinces which are fully protestant show lower fertility rates compared to fully catholic 
 mydata %>%  
   ggplot() +
   geom_point(mapping = aes(x = Catholic, y = Fertility)) +
@@ -162,12 +182,66 @@ mydata %>%
               method = "lm") # Two regions as either high in catholic or low 
 
 ## Relationship Infant Mortality Fertility ##
+# Some correlation between Infant Mortality and Fertility: greater percentage of children living past the 1st year correpsonding with a higher fertility measure. 
 mydata %>%  
   ggplot() +
   geom_point(mapping = aes(x = Infant.Mortality, y = Fertility)) +
   geom_smooth(mapping = aes(x = Infant.Mortality, y = Fertility), 
               method = "lm")
 
+#### Mapping relationships between different variables IV und DV (with simple regression model) ####
+
+## Relationship Examination and Agriculture regarding Fertility ##
+# Fertility rates high: for high agriculture and low examination
+mydata %>%
+  ggplot() +
+  xlab("Agriculture") +
+  ylab("Examination") +
+  geom_point(mapping = aes(
+    x = Agriculture,
+    y = Examination,
+    color = Fertility,
+    size = Fertility,
+    alpha = 0.5)) +
+  geom_smooth(mapping = aes(
+    x = Agriculture, 
+    y = Examination),
+    method = "lm")
+
+## Relationship Education and Agriculture regarding Fertility ##
+# similar pattern
+mydata %>%
+  ggplot() +
+  xlab("Agriculture") +
+  ylab("Education") +
+  geom_point(mapping = aes(
+    x = Agriculture,
+    y = Education,
+    color = Fertility,
+    size = Fertility,
+    alpha = 0.5)) +
+  geom_smooth(mapping = aes(
+    x = Agriculture, 
+    y = Education),
+    method = "lm")
+
+
+## Relationship Education and Examination regarding Fertility ##
+# Positive correlation between Examination and Education. Low fertility rates for residents with high education and more examination
+mydata %>%
+  ggplot() +
+  xlab("Examination") +
+  ylab("Education") +
+  geom_point(mapping = aes(
+    x = Examination,
+    y = Education,
+    color = Fertility,
+    size = Fertility,
+    alpha = 0.5)) +
+  geom_smooth(mapping = aes(
+    x = Examination, 
+    y = Education),
+    method = "lm")
 
 ################################
 ######## Model analysis ########
