@@ -173,4 +173,6 @@ summary(Reg_full) # Examination not significant
 Reg_fullwoexam <- lm(Fertility ~  Agriculture + Education + Catholic + Infant.Mortality, data = mydata)
 summary(Reg_fullwoexam)
 
+## Test 1 ##
+
 
