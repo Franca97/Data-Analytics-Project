@@ -174,5 +174,5 @@ Reg_fullwoexam <- lm(Fertility ~  Agriculture + Education + Catholic + Infant.Mo
 summary(Reg_fullwoexam)
 
 ## Test 1 ##
-
+## Test 2##
 
