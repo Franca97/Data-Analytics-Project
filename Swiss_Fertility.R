@@ -11,6 +11,8 @@ library(dplyr)
 library(lattice)
 library(plotly)
 library(knitr)
+library(MASS)
+library(faraway)
 
 
 #### Getting an overview of the Swiss Fertility dataset #### 
@@ -248,7 +250,8 @@ mydata %>%
 ######## Model analysis ########
 ################################
 
-## Full Model 
+
+### Full Model ###
 
 Reg_full <- lm(Fertility ~  Agriculture + Education + Examination + Catholic + Infant.Mortality, data = mydata)
 summary(Reg_full) # Examination not significant 
@@ -256,3 +259,18 @@ summary(Reg_full) # Examination not significant
 # Why exclude examination? (=> potential OVB )
 Reg_fullwoexam <- lm(Fertility ~  Agriculture + Education + Catholic + Infant.Mortality, data = mydata)
 summary(Reg_fullwoexam)
+
+
+### Diagnostics ###
+par(mfrow = c(2,2))
+plot(Reg_full) 
+# Plot 1: Residual plot, no pattern observed constant variance assumption holds 
+# Plot 2: Normal Q-Q plot, normality assumption holds 
+# Plot 3: some influential points 
+
+## Identifying influential points 
+mydata[cooks.distance(Reg_full) > 0.1,] # Sierre, Rive Gauche, Porrentruy, Neuchatel, Rive Droite, Rive Gauche 
+
+
+
+
