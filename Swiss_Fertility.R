@@ -84,8 +84,9 @@ hist(Fertility, main = "Fertility", xlab = "Fertility") # Fertility rates are mo
 
 
 #### Density Plot of response variable #### 
-plot(density(Fertility), main = "Fertility") # a little bit right skewed 
-#<> Isn't it skewed to the left?
+plot(density(Fertility), main = "Fertility")
+abline(v=c(68, 70.14, 70.4), col="whitesmoke") # a little bit right skewed, mode is defined visually, check visually with hist if more data is on the right side 
+#<> Isn't it skewed to the left? Kommentar Franca: right skewed: most of the data is on the right side of the mode, mean and median are > mode 
 
 
 #### Inspecting and plotting the covariance and correlation #### 
