@@ -41,7 +41,7 @@ attach(mydata) # Kommentar Franca: attach(mydata) wir könnten auch nur diesen C
 #### Getting a general overview of the data #### 
 summary(mydata) # Franca Kommentar: Catholic: Median and Mean are completely different, also high sd (41)
 
-stargazer(mydata, type="html",nobs=FALSE,style = "aer",digits=2, out="test2")
+stargazer(mydata, type="html",nobs=FALSE,style = "aer", iqr=FALSE , title="Table 1 - Swiss Fertility Summary Statistics", digits=2, out="Summary Statistics")
 
 
 #### Drawing a boxplot for first inspection ####
