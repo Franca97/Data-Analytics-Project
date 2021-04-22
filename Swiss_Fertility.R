@@ -4,6 +4,8 @@
 
 #### Loading all the relevant packages and data ####
 install.packages("datasets.load")
+install.packages("moments")
+install.packages("stargazer")
 library(datasets.load)
 library(tidyverse)
 library(ggplot2)
@@ -13,7 +15,8 @@ library(plotly)
 library(knitr)
 library(MASS)
 library(faraway)
-
+library(moments)
+library(stargazer)
 
 #### Getting an overview of the Swiss Fertility dataset #### 
 help(swiss)
@@ -23,12 +26,12 @@ mydata <- swiss
 
 #### Re-naming the relevant variables for easier access ####
 attach(mydata) # Kommentar Franca: attach(mydata) wir könnten auch nur diesen Code verwenden  anstatt sechs variablen machen
-Fertility <- mydata$Fertility
-Agriculture <- mydata$Agriculture
-Examination <- mydata$Examination
-Education <- mydata$Education
-Catholic <- mydata$Catholic
-InfantMortality <- mydata$Infant.Mortality
+# <- mydata$Fertility
+#Agriculture <- mydata$Agriculture
+#Examination <- mydata$Examination
+#Education <- mydata$Education
+#Catholic <- mydata$Catholic
+#InfantMortality <- mydata$Infant.Mortality
 
 
 ################################
@@ -37,6 +40,8 @@ InfantMortality <- mydata$Infant.Mortality
 
 #### Getting a general overview of the data #### 
 summary(mydata) # Franca Kommentar: Catholic: Median and Mean are completely different, also high sd (41)
+
+stargazer(mydata, type="html",nobs=FALSE,style = "aer",digits=2, out="test2")
 
 
 #### Drawing a boxplot for first inspection ####
@@ -48,13 +53,14 @@ boxplot(mydata)
 # table(VARIABLE) Examination und Education einzige Variablen mit gleichen Variablen 
 # M?ssten wir nicht die Variablen durch die Anzahl der Beobachtungen teilen? 
 # length(mydata)=6. D.h. wir m?ssten wenn dann z.B. Fertility/length(mydata$fertility) berechnen? 
+# Kommentar Elias: Habe die Rel. angepasst.
 
-Rel.Freq_Fertility = Fertility / length(mydata$Fertility)
-Rel.Freq_Agriculture = Agriculture / length(mydata)
-Rel.Freq_Examination = Examination / length(mydata)
-Rel.Freq_Education = Education / length(mydata)
-Rel.Freq_Catholic = Catholic / length(mydata)
-Rel.Freq_InfantMortality = InfantMortality / length(mydata)
+Rel.Freq_Fertility = Fertility / count(mydata)
+Rel.Freq_Agriculture = Agriculture / count(mydata)
+Rel.Freq_Examination = Examination / count(mydata)
+Rel.Freq_Education = Education / count(mydata)
+Rel.Freq_Catholic = Catholic / count(mydata)
+Rel.Freq_InfantMortality = Infant.Mortality / count(mydata)
 
 ### Empirical Distribution Function Plots ###
 plot.ecdf(Fertility, main = "Empirical Distribution Function Fertility")
@@ -87,8 +93,9 @@ hist(Fertility, main = "Fertility", xlab = "Fertility") # Fertility rates are mo
 
 #### Density Plot of response variable #### 
 plot(density(Fertility), main = "Fertility")
-abline(v=c(68, 70.14, 70.4), col="whitesmoke") # a little bit right skewed, mode is defined visually, check visually with hist if more data is on the right side 
+abline(v=c(68, 70.14, 70.4), col="gray94") # a little bit right skewed, mode is defined visually, check visually with hist if more data is on the right side 
 #<> Isn't it skewed to the left? Kommentar Franca: right skewed: most of the data is on the right side of the mode, mean and median are > mode 
+# Merker Elias: Discuss skewnwess again
 
 
 #### Inspecting and plotting the covariance and correlation #### 
@@ -100,7 +107,8 @@ require(lattice)
 levelplot(cor(mydata), xlab = "", ylab = "")
 
 ## General plot of all variables ##
-pairs(mydata) # assumption: linear relationship between education and examination/examination and agriculture 
+pairs(mydata, upper.panel = NULL, pch=20,cex=1.5) # assumption: linear relationship between education and examination/examination and agriculture 
+# Kommentar Elias: Adjusted the matrix for more clarity
 
 
 ################################
