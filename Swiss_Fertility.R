@@ -6,6 +6,8 @@
 install.packages("datasets.load")
 install.packages("moments")
 install.packages("stargazer")
+install.packages("leaps")
+
 library(datasets.load)
 library(tidyverse)
 library(ggplot2)
@@ -17,7 +19,7 @@ library(MASS)
 library(faraway)
 library(moments)
 library(stargazer)
-
+library(leaps)
 #### Getting an overview of the Swiss Fertility dataset #### 
 help(swiss)
 View(swiss)
@@ -261,6 +263,7 @@ mydata %>%
 
 ### Full Model ###
 
+## Multiple Regression 
 Reg_full <- lm(Fertility ~  Agriculture + Education + Examination + Catholic + Infant.Mortality, data = mydata)
 summary(Reg_full) # Examination not significant 
 
@@ -268,6 +271,28 @@ summary(Reg_full) # Examination not significant
 Reg_fullwoexam <- lm(Fertility ~  Agriculture + Education + Catholic + Infant.Mortality, data = mydata)
 summary(Reg_fullwoexam)
 
+
+## Perform a stepwise regression
+
+lm_swiss1 <- lm(Fertility ~ 1, data = mydata) # only intercept
+lm_swiss2 <- lm(Fertility ~ ., data = mydata) # full regression 
+
+# Forward Regression
+step(lm_swiss1, direction = "forward",  scope = list(lower = lm_swiss1, upper = lm_swiss2))
+
+# Backward Regression
+step(lm_swiss2, direction = "backward")
+
+# Graphical Representation 
+model_eva <- leaps::regsubsets(Fertility ~ ., data = mydata, nbest = 2) # number of best models per number of included variables 
+print(summary(model_eva))
+
+print(summary(model_eva)$which)
+
+# Visualizing BIC and AdjR2
+par(mfrow = c(1, 2))
+plot(model_eva) #the lower the bic the better the model best model includes agriculture, education, catholic and infant mortality 
+plot(model_eva, scale = "adjr2") # highest adj r2 all iv, second highest adjr2 includes all ivs except examination
 
 ### Diagnostics ###
 par(mfrow = c(2,2))
