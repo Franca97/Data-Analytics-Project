@@ -256,12 +256,23 @@ mydata %>%
     y = Education),
     method = "lm")
 
+
+## Density Plot for Education and Fertility ## 
+
+ggplot(mydata, aes(x = Education, y = Fertility)) +
+  geom_bin2d() +
+  theme_bw()
+
 ################################
 ######## Model analysis ########
 ################################
 
 
-### Full Model ###
+## Simple linear regression ##
+reg_simple <- lm(Fertility ~ Education, data = mydata)
+summary(reg_simple)
+
+
 
 ## Multiple Regression 
 Reg_full <- lm(Fertility ~  Agriculture + Education + Examination + Catholic + Infant.Mortality, data = mydata)
