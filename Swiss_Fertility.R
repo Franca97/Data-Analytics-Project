@@ -296,7 +296,13 @@ ggplot(mydata, aes(x = Education, y = Fertility)) +
 reg_simple <- lm(Fertility ~ Education, data = mydata)
 summary(reg_simple)
 
-
+# removing geneve doesnt change much
+#mydata <- rowid_to_column(mydata, "ID") 
+#View(mydata)
+#data_red <- mydata[-c(45), ]
+#attach(data_red)
+#reg_simple2 <- lm(Fertility ~ Education, data = data_red)
+#summary(reg_simple)
 
 ## Multiple Regression 
 Reg_full <- lm(Fertility ~  Agriculture + Education + Examination + Catholic + Infant.Mortality, data = mydata)
