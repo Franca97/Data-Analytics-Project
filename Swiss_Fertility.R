@@ -120,15 +120,24 @@ pairs(mydata, upper.panel = NULL, pch=20,cex=1.5) # assumption: linear relations
 #### Ranking of provinces with regards to fertility rates ####
 ## Top 10 provinces with high fertility ## 
 mydata %>% 
-  select(Fertility) %>% 
+  dplyr::select(Fertility) %>% 
   arrange(desc(Fertility)) %>% 
   head(10)
 
 ## Top 10 provinces with low fertility ## 
+
+
 mydata %>% 
-  select(Fertility) %>% 
+  dplyr::select(Fertility) %>% 
   arrange(desc(Fertility)) %>% 
   tail(10) # Cities: Geneve, Lausanne, Nyone 
+
+
+## Top 10 provinces with high education percentage 
+mydata %>%  
+  dplyr::select(Education) %>% 
+  arrange(desc(Education)) %>% 
+  head(10) # Geneve 53 (outlier)
 
 
 #### Mapping relationships between different variables IV und DV (with simple regression model) ####
@@ -169,6 +178,21 @@ mydata %>%
   geom_smooth(mapping = aes(x = Education, y = Fertility), 
               method = "lm") + 
   ylim(0, 100)
+
+mydata %>%
+  ggplot() +
+  xlab("Education") +
+  ylab("Fertility") +
+  geom_point(mapping = aes(
+    x = Education,
+    y = Fertility,
+    color = Education,
+    size = Fertility,
+    alpha = 0.5)) +
+  geom_smooth(mapping = aes(
+    x = Education, 
+    y = Fertility),
+    method = "lm")
 
 
 # Simple model #
@@ -261,14 +285,14 @@ mydata %>%
 
 ggplot(mydata, aes(x = Education, y = Fertility)) +
   geom_bin2d() +
-  theme_bw()
+  theme_bw() 
 
 ################################
 ######## Model analysis ########
 ################################
 
 
-## Simple linear regression ##
+## Simple linear regression Fertility and Education ##
 reg_simple <- lm(Fertility ~ Education, data = mydata)
 summary(reg_simple)
 
