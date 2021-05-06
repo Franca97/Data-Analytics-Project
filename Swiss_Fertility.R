@@ -109,7 +109,7 @@ require(lattice)
 levelplot(cor(mydata), xlab = "", ylab = "")
 
 ## General plot of all variables ##
-pairs(mydata, upper.panel = NULL, pch=20,cex=1.5) # assumption: linear relationship between education and examination/examination and agriculture 
+pairs(mydata, upper.panel = NULL, pch=20,cex=1.25) # assumption: linear relationship between education and examination/examination and agriculture 
 # Kommentar Elias: Adjusted the matrix for more clarity
 
 
