@@ -1,7 +1,7 @@
 ###################################################################################
 ############################# Swiss Fertility #####################################
 ###################################################################################
-#test
+
 #### Loading all the relevant packages and data ####
 install.packages("datasets.load")
 install.packages("moments")
@@ -20,6 +20,7 @@ library(faraway)
 library(moments)
 library(stargazer)
 library(leaps)
+library(glmnet)
 #### Getting an overview of the Swiss Fertility dataset #### 
 help(swiss)
 View(swiss)
@@ -345,6 +346,42 @@ plot(Reg_full)
 ## Identifying influential points 
 mydata[cooks.distance(Reg_full) > 0.1,] # Sierre, Rive Gauche, Porrentruy, Neuchatel, Rive Droite, Rive Gauche 
 
+################################
+############# Lasso ############
+################################
+#Highly correlated variables such as [example]] effect OLS
+#Variance explodes -> Multicolinearity
+#Lasso or Ridge Regression is a Solution for Multicolinearity
+#Lasso penalizes correlated variables: If there are two highly correlated variables, Lasso removes one randomly
+#This is a caveat for interpretation and must be verified by economic reasoning
 
+# Prepare training and testing dataset split
+set.seed (20210508)
+# Need to split mydata into x and y and make x a matrix not dataframe (either here or later)
+x <- as.matrix(swiss$Agriculture, swiss$Examination, swiss$Education, swiss$Catholic, swiss$Infant.Mortality)
+y <- swiss$Fertility
+# Set sample size 75% (TBD)
+smp_size <- floor(0.75 * nrow(x))
+train <- sample(seq_len(nrow(x)), size = smp_size)
+x_test = (-train)
 
+####### Work in progress below (ignore code snippets) ####### 
 
+# Whole lasso path
+#lasso <- glmnet(as.matrix(train[,c(1:25)]), train$G3, family = "gaussian", alpha = 1)
+#plot(lasso, label = TRUE)
+#glmnt eats only matrices, feed x as matrix and y as vector
+# alpha = 1 means ridge=0 and only lasso remains
+
+#set.seed(27112019)
+#lasso.cv <- cv.glmnet(as.matrix(train[,c(1:25)]), train$G3, type.measure = "mse", family = "gaussian", nfolds = 5, alpha = 1)
+#coef_lasso1 <- coef(lasso.cv, s = "lambda.min") # save for later comparison
+#print(coef_lasso1)
+#plot(lasso.cv)
+#input x and y, function to use is MSE
+
+# Calculate the MSE
+#test$predlasso <- predict(lasso.cv, newx = as.matrix(test[,c(1:25)]), s = lasso.cv$lambda.min)
+
+#predMSElasso <- mean((test$G3 - test$predlasso)^2)
+#print(predMSElasso)
