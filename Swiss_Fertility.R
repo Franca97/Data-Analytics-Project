@@ -293,9 +293,25 @@ ggplot(mydata, aes(x = Education, y = Fertility)) +
 ################################
 
 
+
 ## Simple linear regression Fertility and Education ##
 reg_simple <- lm(Fertility ~ Education, data = mydata)
 summary(reg_simple)
+
+# Visualize the results 
+fit = fitted(reg_simple)
+plot(mydata$Education, mydata$Fertility)
+lines(mydata$Education, fit, col = 2)
+
+# Plot the residuals for the simple model  
+resi_simple = reg_simple$residuals
+plot(mydata$Education, resi_simple)
+lines(mydata$Education, rep(0, times = length(mydata$Education)), col = 2) # there should be no pattern, is there a pattern?
+
+# Plot 
+plot(reg_simple) # Normal QQ, Residuals vs. Leverage, Scale Location 
+
+qnorm(0.95) 
 
 # removing geneve doesnt change much
 #mydata <- rowid_to_column(mydata, "ID") 
