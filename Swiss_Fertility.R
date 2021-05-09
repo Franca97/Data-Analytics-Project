@@ -300,12 +300,12 @@ ggplot(mydata, aes(x = Education, y = Fertility)) +
 reg_simple <- lm(Fertility ~ Education, data = mydata)
 summary(reg_simple)
 
-# Visualize the results 
+# Visualize the simple regression results 
 fit = fitted(reg_simple)
 plot(mydata$Education, mydata$Fertility)
 lines(mydata$Education, fit, col = 2)
 
-# Plot the residuals for the simple model  
+# Plot the residuals for the simple model (check if X and U are not related)
 resi_simple = reg_simple$residuals
 plot(mydata$Education, resi_simple)
 lines(mydata$Education, rep(0, times = length(mydata$Education)), col = 2) # there should be no pattern, is there a pattern?
@@ -357,6 +357,23 @@ plot(Bandwidth,plot.errors.method="bootstrap")
 lines(Education,fitted(reg_simple), col="2" ) # adding the linear simple model to the graph, non parametric estimate does not look linear and not very similar to the linear model 
 dev.off()
 
+### Diagnostics ###
+# Fit the model and add a fitted line to the scatterplot 
+plot(Fertility ~ Education, data = mydata, col = "grey", pch = 20, main = "Simple Model")
+fit_1 = lm(Fertility ~ Education, data = mydata)
+abline(fit_1, col = "green", lwd = 3)
+
+# Fitted versus residuals plot: constant variance if the spread of the residuals is roughly the same; if the mean is roughly zero the linearity assumption holds 
+plot(fitted(fit_1), resid(fit_1), col = "grey", pch = 20,
+     xlab = "Fitted", ylab = "Residuals", main = "Simple Model: fitted vs. resiudals")
+abline(h = 0, col = "darkorange", lwd = 2)
+
+
+par(mfrow = c(2,2))
+plot(reg_simple) 
+# Plot 1: Residual plot, no pattern observed constant variance assumption holds 
+# Plot 2: Normal Q-Q plot, normality assumption holds 
+# Plot 3: some influential points 
 
 
 
