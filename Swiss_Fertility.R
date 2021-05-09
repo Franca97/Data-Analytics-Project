@@ -368,6 +368,16 @@ plot(fitted(fit_1), resid(fit_1), col = "grey", pch = 20,
      xlab = "Fitted", ylab = "Residuals", main = "Simple Model: fitted vs. resiudals")
 abline(h = 0, col = "darkorange", lwd = 2)
 
+# Breusch Pagan Test: Formal test for homoscedasticity 
+install.packages("lmtest")
+library(lmtest)
+
+bptest(fit_1) # large p value we dont reject h0 of homoscedasticity --> all good!
+
+# Normal Q-Q Plots for 
+qqnorm(resid(fit_1), main = "Normal Q-Q Plot, fit_1", col = "darkgrey")
+qqline(resid(fit_1), col = "dodgerblue", lwd = 2)
+
 
 par(mfrow = c(2,2))
 plot(reg_simple) 
