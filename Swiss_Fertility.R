@@ -352,10 +352,12 @@ npreg1=npreg(bws=Bandwidth)
 # Extract the fitted from npreg1 in a standard way: 
 My.fitted.values=fitted(npreg1)
 
-# Plot it: 
+# Plot it: Compare a linear model to the flexible model  
 plot(Bandwidth,plot.errors.method="bootstrap")
-lines(Education,fitted(reg_simple), col="2" ) # adding the linear simple model to the graph 
+lines(Education,fitted(reg_simple), col="2" ) # adding the linear simple model to the graph, non parametric estimate does not look linear and not very similar to the linear model 
 dev.off()
+
+# 
 
 
 
