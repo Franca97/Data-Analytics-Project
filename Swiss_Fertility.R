@@ -292,8 +292,6 @@ ggplot(mydata, aes(x = Education, y = Fertility)) +
 ######## Model analysis ########
 ################################
 
-
-
 ## Simple linear regression Fertility and Education ##
 reg_simple <- lm(Fertility ~ Education, data = mydata)
 summary(reg_simple)
@@ -312,6 +310,20 @@ lines(mydata$Education, rep(0, times = length(mydata$Education)), col = 2) # the
 plot(reg_simple) # Normal QQ, Residuals vs. Leverage, Scale Location 
 
 qnorm(0.95) 
+
+## Test Linearity by adding polynomials
+# Define variables
+attach(mydata)
+Education2 = Education^2
+Education3 = Education^3
+
+mydata <- cbind(mydata, Education2, Education3)
+
+# Regression with polynomials 
+
+reg_simple2 <- lm(Fertility ~ Education + Education2 + Education3, mydata)
+summary(reg_simple2) # p values are very large indicate that I am not confident that my Education has an impact on the fertility
+
 
 # removing geneve doesnt change much
 #mydata <- rowid_to_column(mydata, "ID") 
