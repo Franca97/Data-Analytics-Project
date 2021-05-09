@@ -7,6 +7,9 @@ install.packages("datasets.load")
 install.packages("moments")
 install.packages("stargazer")
 install.packages("leaps")
+install.packages("np")
+
+
 
 library(datasets.load)
 library(tidyverse)
@@ -21,6 +24,7 @@ library(moments)
 library(stargazer)
 library(leaps)
 library(glmnet)
+library(np)
 #### Getting an overview of the Swiss Fertility dataset #### 
 help(swiss)
 View(swiss)
@@ -332,6 +336,25 @@ lines(Education, reg_simple$fitted, col = "red") # if they are similar, the mode
 cor(Education, Education2) # highly correlated 0.9361279
 cor(Education, Education3) # rel. highly correlated 0.8389176
 cor(Education2, Education3) # highly correlated 0.9734444
+
+## Smooth 
+#install.packages("np")
+library(np)
+
+# Estimate the optimal band with 
+Bandwidth=npregbw(Fertility~Education)
+
+# Estimate the function using the optimal band width 
+npreg1=npreg(bws=Bandwidth)
+
+# Extract the fitted from npreg1 in a standard way: 
+My.fitted.values=fitted(npreg1)
+
+# Plot it: 
+plot(Bandwidth,plot.errors.method="bootstrap")
+lines(Education,fitted(reg_simple), col="2" ) # adding the linear simple model to the graph 
+dev.off()
+
 
 ## Multiple Regression 
 Reg_full <- lm(Fertility ~  Agriculture + Education + Examination + Catholic + Infant.Mortality, data = mydata)
