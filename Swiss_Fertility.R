@@ -330,7 +330,7 @@ summary(reg_simple2) # p values are very large indicate that I am not confident 
 
 # Compare both models visually 
 plot(Education, reg_simple2$fitted); 
-lines(Education, reg_simple$fitted, col = "red") # if they are similar, the model should be linear, if the deviation small the linear model is not wrong 
+lines(Education, reg_simple$fitted, col = "red") # if they are similar, the model should be linear, if the deviation is small the linear model is not wrong 
 
 ## Multicollinearity 
 cor(Education, Education2) # highly correlated 0.9361279
