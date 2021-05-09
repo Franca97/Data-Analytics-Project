@@ -342,11 +342,13 @@ cor(Education2, Education3) # highly correlated 0.9734444
 library(np)
 
 # Estimate the optimal band with 
-Bandwidth=npregbw(Fertility~Education)
+Bandwidth=npregbw(Fertility~Education) # non parametric regression
+summary(Bandwidth) # optimal bandwidth is 6.76351
 
 # Estimate the function using the optimal band width 
 npreg1=npreg(bws=Bandwidth)
 
+## Compare the non-parametric regression with the univariate linear regression
 # Extract the fitted from npreg1 in a standard way: 
 My.fitted.values=fitted(npreg1)
 
