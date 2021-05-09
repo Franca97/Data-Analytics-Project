@@ -356,6 +356,8 @@ lines(Education,fitted(reg_simple), col="2" ) # adding the linear simple model t
 dev.off()
 
 
+
+
 ## Multiple Regression 
 Reg_full <- lm(Fertility ~  Agriculture + Education + Examination + Catholic + Infant.Mortality, data = mydata)
 summary(Reg_full) # Examination not significant 
