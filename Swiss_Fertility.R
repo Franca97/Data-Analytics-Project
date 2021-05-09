@@ -324,18 +324,14 @@ mydata <- cbind(mydata, Education2, Education3)
 reg_simple2 <- lm(Fertility ~ Education + Education2 + Education3, mydata)
 summary(reg_simple2) # p values are very large indicate that I am not confident that my Education has an impact on the fertility
 
-# Compare both models 
+# Compare both models visually 
 plot(Education, reg_simple2$fitted); 
-lines(Education, reg_simple$fitted, col = "red") # if they are similar, the model should be linear 
+lines(Education, reg_simple$fitted, col = "red") # if they are similar, the model should be linear, if the deviation small the linear model is not wrong 
 
-
-# removing geneve doesnt change much
-#mydata <- rowid_to_column(mydata, "ID") 
-#View(mydata)
-#data_red <- mydata[-c(45), ]
-#attach(data_red)
-#reg_simple2 <- lm(Fertility ~ Education, data = data_red)
-#summary(reg_simple)
+## Multicollinearity 
+cor(Education, Education2) # highly correlated 0.9361279
+cor(Education, Education3) # rel. highly correlated 0.8389176
+cor(Education2, Education3) # highly correlated 0.9734444
 
 ## Multiple Regression 
 Reg_full <- lm(Fertility ~  Agriculture + Education + Examination + Catholic + Infant.Mortality, data = mydata)
