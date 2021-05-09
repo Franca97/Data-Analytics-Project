@@ -357,8 +357,6 @@ plot(Bandwidth,plot.errors.method="bootstrap")
 lines(Education,fitted(reg_simple), col="2" ) # adding the linear simple model to the graph, non parametric estimate does not look linear and not very similar to the linear model 
 dev.off()
 
-# 
-
 
 
 
