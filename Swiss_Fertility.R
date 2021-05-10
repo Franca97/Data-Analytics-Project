@@ -469,7 +469,7 @@ plot(lasso.cv)
 # grey bars are standard deviations along the lambda sequence
 # Lambda min is the value of lambda that gives the minimum mean cross-validated error (vertical dotted line)
 best_lambda <- lasso.cv$lambda.min
-print(best_lambda) #0.0277 is very low, 0 would be standard OLS
+print(best_lambda)
 
 # Predict on test data
 predlasso1 <- predict(lasso.cv, newx = lasso_x[-training_set,], s = lasso.cv$lambda.min)
