@@ -434,39 +434,64 @@ mydata[cooks.distance(Reg_full) > 0.1,] # Sierre, Rive Gauche, Porrentruy, Neuch
 ################################
 ############# Lasso ############
 ################################
-#Highly correlated variables such as [example]] effect OLS
-#Variance explodes -> Multicolinearity
-#Lasso or Ridge Regression is a Solution for Multicolinearity
-#Lasso penalizes correlated variables: If there are two highly correlated variables, Lasso removes one randomly
-#This is a caveat for interpretation and must be verified by economic reasoning
-
-# Prepare training and testing dataset split
+# Highly correlated variables such as [example] effect OLS
+# Variance explodes -> Multicolinearity
+# Lasso or Ridge Regression is a Solution for Multicolinearity (variable selection and regularization)
+# Lasso penalizes correlated variables: If there are two highly correlated variables, Lasso removes one randomly
+# This is a caveat for interpretation and must be verified by economic reasoning
+# Regularization parameter lambda governs degree of how much coefficients are penalized (lambda =0 would be normal OLS)
+# Ridge adds quadratic parts to the penalty (SST: i think not necessary, Ridge supposed to work well if there are many large parameters of about the same value)
 set.seed (20210508)
-# Need to split mydata into x and y and make x a matrix not dataframe (either here or later)
-x <- as.matrix(swiss$Agriculture, swiss$Examination, swiss$Education, swiss$Catholic, swiss$Infant.Mortality)
-y <- swiss$Fertility
-# Set sample size 75% (TBD)
-smp_size <- floor(0.75 * nrow(x))
-train <- sample(seq_len(nrow(x)), size = smp_size)
-x_test = (-train)
+lasso_x <- as.matrix(swiss[ ,2:6])
+lasso_y <- swiss$Fertility
+#partitioning is needed for learning within the test/train dataset (splitting data into train and test data)
+size <- floor(0.75 * nrow(swiss)) # Generate variable with the rows in training data
+training_set <- sample(seq_len(nrow(swiss)), size = size)
+# In theory one could loop this over different seeds to optimize
 
-####### Work in progress below (ignore code snippets) ####### 
+# Perform Lasso cross validation to find optimal lambda
+lasso.cv <- cv.glmnet( 
+  lasso_x[training_set,],
+  lasso_y[training_set],
+  type.measure = "mse", 
+  family = "gaussian", # non binary
+  nfolds = 10, # number of folds
+  alpha = 1 # alpha = 1 means ridge penalty =0 and only lasso penalty remains (inbetween is a mix)
+)
 
-# Whole lasso path
-#lasso <- glmnet(as.matrix(train[,c(1:25)]), train$G3, family = "gaussian", alpha = 1)
-#plot(lasso, label = TRUE)
-#glmnt eats only matrices, feed x as matrix and y as vector
-# alpha = 1 means ridge=0 and only lasso remains
+# Save and inspect coefficients
+coef_lasso <- coef(lasso.cv, s = "lambda.min") # save for later comparison
+print(coef_lasso)
+# Seems like none have been dropped, to be compared to OLS
 
-#set.seed(27112019)
-#lasso.cv <- cv.glmnet(as.matrix(train[,c(1:25)]), train$G3, type.measure = "mse", family = "gaussian", nfolds = 5, alpha = 1)
-#coef_lasso1 <- coef(lasso.cv, s = "lambda.min") # save for later comparison
-#print(coef_lasso1)
-#plot(lasso.cv)
-#input x and y, function to use is MSE
+# Plot the cross-validation curve (red dotted line)
+plot(lasso.cv)
+# grey bars are standard deviations along the lambda sequence
+# Lambda min is the value of lambda that gives the minimum mean cross-validated error (vertical dotted line)
+best_lambda <- lasso.cv$lambda.min
+print(best_lambda) #0.0277 is very low, 0 would be standard OLS
 
+# Predict on test data
+predlasso1 <- predict(lasso.cv, newx = lasso_x[-training_set,], s = lasso.cv$lambda.min)
 # Calculate the MSE
-#test$predlasso <- predict(lasso.cv, newx = as.matrix(test[,c(1:25)]), s = lasso.cv$lambda.min)
-
-#predMSElasso <- mean((test$G3 - test$predlasso)^2)
-#print(predMSElasso)
+predMSElasso <- mean((lasso_y[-training_set] - predlasso1)^2)
+print(predMSElasso) # SST: that seems very far off, gotta check 
+rss <- sum((predlasso1 - lasso_y[-training_set])^2) #residial sum of squares 
+tss <- sum((lasso_y[-training_set] - mean(lasso_y[-training_set])) ^ 2)
+rsq <- 1 - rss/tss
+print(rsq) #R^2 of 0.22 is trash
+# However, our goal is not estimating on a test sample but rather understanding the effect of edu on fertility
+# For interpretation it would be interesting to have Lasso drop some variables (e.g Education)
+# In order to get that done, penalty must increase (its relatively low now)
+# Use Lasso without train/test split to see if edu gets penalized
+# Perform Lasso cross validation to find optimal lambda
+lasso2.cv <- cv.glmnet( 
+  lasso_x,
+  lasso_y,
+  type.measure = "mse", 
+  family = "gaussian", # non binary
+  nfolds = 10, # number of folds
+  alpha = 1 # alpha = 1 means ridge penalty =0 and only lasso penalty remains (inbetween is a mix)
+)
+coef_lasso2 <- coef(lasso2.cv, s = "lambda.min") # save for later comparison
+print(coef_lasso2) #Not really helpful from first impression (gotta look at it again)
