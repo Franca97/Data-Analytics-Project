@@ -374,9 +374,12 @@ library(lmtest)
 
 bptest(fit_1) # large p value we dont reject h0 of homoscedasticity --> all good!
 
-# Normal Q-Q Plots for 
+# Normal Q-Q Plots for normal distribution of residuals 
 qqnorm(resid(fit_1), main = "Normal Q-Q Plot, fit_1", col = "darkgrey")
 qqline(resid(fit_1), col = "dodgerblue", lwd = 2)
+
+# formal solution for normal distribution of residuals 
+shapiro.test(resid(fit_1))
 
 
 par(mfrow = c(2,2))
