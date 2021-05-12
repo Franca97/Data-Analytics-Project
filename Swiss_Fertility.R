@@ -29,7 +29,7 @@ library(np)
 help(swiss)
 View(swiss)
 mydata <- swiss 
-
+# tetste
 
 #### Re-naming the relevant variables for easier access ####
 attach(mydata) # Kommentar Franca: attach(mydata) wir könnten auch nur diesen Code verwenden  anstatt sechs variablen machen
