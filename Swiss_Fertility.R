@@ -1,6 +1,8 @@
 ###################################################################################
-############################# Swiss Fertility #####################################
+############################# SWISS FERTILITY #####################################
 ###################################################################################
+
+############################ Preparatory steps ####################################
 
 #### Loading all the relevant packages and data ####
 install.packages("datasets.load")
@@ -9,8 +11,7 @@ install.packages("stargazer")
 install.packages("leaps")
 install.packages("np")
 
-
-
+#### Installing the necessary libraries ####
 library(datasets.load)
 library(tidyverse)
 library(ggplot2)
@@ -25,167 +26,112 @@ library(stargazer)
 library(leaps)
 library(glmnet)
 library(np)
+library(lmtest)
+
 #### Getting an overview of the Swiss Fertility dataset #### 
 help(swiss)
 View(swiss)
-mydata <- swiss 
-# tetste
+mydata = swiss
 
 #### Re-naming the relevant variables for easier access ####
-attach(mydata) # Kommentar Franca: attach(mydata) wir könnten auch nur diesen Code verwenden  anstatt sechs variablen machen
-# <- mydata$Fertility
-#Agriculture <- mydata$Agriculture
-#Examination <- mydata$Examination
-#Education <- mydata$Education
-#Catholic <- mydata$Catholic
-#InfantMortality <- mydata$Infant.Mortality
+attach(mydata)
 
 
-################################
-#### Descriptive Statistics ####
-################################
+###################################################################################
+############################ Descriptive Stats ####################################
+###################################################################################
 
 #### Getting a general overview of the data #### 
-summary(mydata) # Franca Kommentar: Catholic: Median and Mean are completely different, also high sd (41)
-
-stargazer(mydata, type="html",nobs=FALSE,style = "aer", iqr=FALSE , title="Table 1 - Swiss Fertility Summary Statistics", digits=2, out="Summary Statistics")
-
+summary(mydata) # Comment: Catholic: Median and Mean are completely different, also high sd (41)
+stargazer(mydata, type = "html", nobs = FALSE, style = "aer", iqr = FALSE , title = "Table 1 - Swiss Fertility Summary Statistics", digits = 2, out = "Summary Statistics")
 
 #### Drawing a boxplot for first inspection ####
-# We have to watch out with "Catholic" as it is more or less a "binary" variable
-boxplot(mydata)
+boxplot(mydata, ylab = "Occurrence", main = "Boxplot of the Swiss Fertility data set") # Comment: We have to watch out with "Catholic" as it is more or less a "binary" variable
 
+#### Empirical Distribution Function Plots ####
+plot.ecdf(Fertility, xlab = "Fertility", main = "Empirical Distribution Function Fertility")
+plot.ecdf(Agriculture, xlab = "Agriculture", main ="Empirical Distribution Function Agriculture")
+plot.ecdf(Examination, xlab = "Examination", main = "Empirical Distribution Function Examination")
+plot.ecdf(Catholic, xlab = "Catholic", main = "Empirical Distribution Function Catholic") # Comment: looks almost binary 
+plot.ecdf(Infant.Mortality, xlab = "Infant.Mortality", main = "Empirical Distribution Function Infant Mortality")
 
-#### Calculating the relative frequencies #### <- evtl. l?schen, da beinahe keine Werte mehrmals. Evtl mit Intervallen arbeiten? Kommentar Franca: Ja, bei continous variable oder vielen values macht es keinen Sinn, Intervalle sinnvoller 
-# table(VARIABLE) Examination und Education einzige Variablen mit gleichen Variablen 
-# M?ssten wir nicht die Variablen durch die Anzahl der Beobachtungen teilen? 
-# length(mydata)=6. D.h. wir m?ssten wenn dann z.B. Fertility/length(mydata$fertility) berechnen? 
-# Kommentar Elias: Habe die Rel. angepasst.
-
-Rel.Freq_Fertility = Fertility / count(mydata)
-Rel.Freq_Agriculture = Agriculture / count(mydata)
-Rel.Freq_Examination = Examination / count(mydata)
-Rel.Freq_Education = Education / count(mydata)
-Rel.Freq_Catholic = Catholic / count(mydata)
-Rel.Freq_InfantMortality = Infant.Mortality / count(mydata)
-
-### Empirical Distribution Function Plots ###
-plot.ecdf(Fertility, main = "Empirical Distribution Function Fertility")
-plot.ecdf(Agriculture, main="Empirical Distribution Function Agriculture")
-plot.ecdf(Examination, main = "Empirical Distribution Function Examination")
-plot.ecdf(Catholic, main = "Empirical Distribution Function Catholic") # looks like binary 
-plot.ecdf(Infant.Mortality, main = "Empirical Distribution Function Infant Mortality")
-
-
-## Creating frequency brackets for analysis ##
-# Warum diese Ober- und Untergrenze?
-lower_bound <- 60  ## defining the lower bound as 60 ##
-upper_bound <- 90  ## defining the upper bound as 90 ##
-Fertility_low <- c(Fertility <= lower_bound)  ## defining low fertility as values below the lower bound ##
-Fertility_average <- between(Fertility, lower_bound, upper_bound)  ## defining average fertility as values between the lower and the upper bound ##
-Fertility_high <- c(Fertility >= upper_bound)  ## defining high fertility as values above the upper bound ##
-
-Rel.Freq_Fertility_low <- sum(Fertility_low) / length(Fertility)  ## calculating the relative frequency of low fertility ##
-Rel.Freq_Fertility_average <- sum(Fertility_average) / length(Fertility)  ## calculating the relative frequency of average fertility ##
-Rel.Freq_Fertility_high <- sum(Fertility_high) / length(Fertility)  ## calculating the relative frequency of high fertility ##
-
-print(Rel.Freq_Fertility_low)
-print(Rel.Freq_Fertility_average)
-print(Rel.Freq_Fertility_high)
-
-
-#### Histogram: Distribution ####
+#### Histogram of the distribution of fertility and education across the whole dataset ####
 hist(Fertility, main = "Fertility", xlab = "Fertility") # Fertility rates are mostly between 60 and 90% 
+hist(Education, main = "Education", xlab = "Education") # Mostly lower levels of education in the dataset
 
-
-#### Density Plot of response variable #### 
+#### Density plot of Fertility as dependent variable #### 
 plot(density(Fertility), main = "Fertility")
-abline(v=c(68, 70.14, 70.4), col="gray94") # a little bit right skewed, mode is defined visually, check visually with hist if more data is on the right side 
+abline(v=c(68, mean(Fertility), median(Fertility)), col="gray94") # a little bit right skewed, mode is defined visually, check visually with hist if more data is on the right side 
+abline(v=c(mean(Fertility), median(Fertility)), col = "red") #negative skew given that the mean (70.14) is left of the median (70.4); mode does not make sense in my opinion given we have no value twice  
 #<> Isn't it skewed to the left? Kommentar Franca: right skewed: most of the data is on the right side of the mode, mean and median are > mode 
 # Merker Elias: Discuss skewnwess again
 
-
-#### Inspecting and plotting the covariance and correlation #### 
+#### Creating a covariance and correlation matrix to observe potential dependencies #### 
 cov(mydata)
-cor(mydata) # correlations with response variable lower than .8. 
+cor_matrix = as.matrix(cor(mydata)) # correlations with response variable lower than .8.
+cor_matrix[upper.tri(cor_matrix)] <- NA
+print(cor_matrix, na.print = "")
 
-## Plotting the correlation matrix ##
+#### Plotting correlation matrix for improved visual inspection ####
 require(lattice)
-levelplot(cor(mydata), xlab = "", ylab = "")
+levelplot(cor(mydata), xlab = "", ylab = "") # visible correlation between Fertility and Education & Examination. Also, highly negative correlation between Education and Agriculture (Instrumental Variable?)
 
-## General plot of all variables ##
-pairs(mydata, upper.panel = NULL, pch=20,cex=1.25) # assumption: linear relationship between education and examination/examination and agriculture 
-# Kommentar Elias: Adjusted the matrix for more clarity
+#### General plot of all variables for preliminary assumptions regarding model fit ####
+pairs(mydata, upper.panel = NULL, pch = 20, cex = 1.25) # assumption: linear relationship between Education and Examination/Examination and Agriculture 
 
 
-################################
-###### Exploring the Data ######
-################################
+############################ Exploring the Data ####################################
 
-#### Ranking of provinces with regards to fertility rates ####
-## Top 10 provinces with high fertility ## 
+#### Ranking of provinces with regards to Fertility rates ####
+## Top 10 provinces with highest fertility rates ##
 mydata %>% 
   dplyr::select(Fertility) %>% 
   arrange(desc(Fertility)) %>% 
   head(10)
-
-## Top 10 provinces with low fertility ## 
-
-
+## Top 10 provinces with lowest fertility rates ## 
 mydata %>% 
   dplyr::select(Fertility) %>% 
   arrange(desc(Fertility)) %>% 
   tail(10) # Cities: Geneve, Lausanne, Nyone 
 
-
-## Top 10 provinces with high education percentage 
+#### Ranking of provinces with regards to Education ####
+## Top 10 provinces with high education percentage ##
 mydata %>%  
   dplyr::select(Education) %>% 
   arrange(desc(Education)) %>% 
   head(10) # Geneve 53 (outlier)
+## Top 10 provinces with lowest education rates ##
+mydata %>%  
+  dplyr::select(Education) %>% 
+  arrange(desc(Education)) %>% 
+  tail(10)
 
 
-#### Mapping relationships between different variables IV und DV (with simple regression model) ####
-## Relationship Agriculture Fertility ##
+###################################################################################
+############################## Model Analysis #####################################
+###################################################################################
+
+######################## Simple Linear Regression #################################
+
+##### First, we run a simple linear model with the two variables of interest, Fertility and Education, with Education being the regressor ####
+reg_simple = lm(Fertility ~ Education, data = mydata)
+summary(reg_simple)
+## For a first inspection, we visualize the simple regression results ##
+fit = fitted(reg_simple)
+plot(Education, Fertility, main = "Fertility and Education Regression", xlab = "Education", ylab = "Fertility")
+lines(Education, fit, col = 2)
+# Additionally, we visualize the same data with a more complex model #
 mydata %>%  
   ggplot() +
-  geom_point(mapping = aes(x = Agriculture, y = Fertility)) +
-  geom_smooth(mapping = aes(x = Agriculture, y = Fertility),
-              method = "lm") 
-
-## Relationship Examination Fertility ##
-mydata %>%  
-  ggplot() +
-  geom_point(mapping = aes(x = Examination, y = Fertility)) +
-  geom_smooth(mapping = aes(x = Examination, y = Fertility), 
-              method = "lm") 
-
-mydata %>%
-  ggplot() +
-  xlab("Examination") +
-  ylab("Fertility") +
-  geom_point(mapping = aes(
-    x = Examination,
-    y = Fertility,
-    color = Examination,
-    size = Fertility,
-    alpha = 0.5)) +
-  geom_smooth(mapping = aes(
-    x = Examination, 
-    y = Fertility),
-    method = "lm")
-
-## Relationship Education Fertility ##
-# Advanced model #
-mydata %>%  
-  ggplot() +
+  ggtitle("Fertility and Education Regression") +
   geom_point(mapping = aes(x = Education, y = Fertility)) +
   geom_smooth(mapping = aes(x = Education, y = Fertility), 
               method = "lm") + 
   ylim(0, 100)
-
+# And with another chart, with the size of the dots equaling the underlying values #
 mydata %>%
   ggplot() +
+  ggtitle("Fertility and Education Regression") +
   xlab("Education") +
   ylab("Fertility") +
   geom_point(mapping = aes(
@@ -197,123 +143,27 @@ mydata %>%
   geom_smooth(mapping = aes(
     x = Education, 
     y = Fertility),
-    method = "lm")
+    method = "lm") +
+  ylim(0, 100)
 
-
-# Simple model #
-# I have changed the axes
-plot(y = Fertility, ylab = "Fertility", ylim = c(0,100), x = Education, xlab = "Education", 
-     main = "Swiss Fertility and Education Indicators", pch = 19, col="black")
-simple.regression_FertilityEdcuation <- lm(Fertility ~ Education, data = swiss)
-abline(simple.regression_FertilityEdcuation, col = "red")
-# Axis inverted for visual inspection #
-# Why two plots? Isn't it easier to just change the first plot?
-plot(x = Education, xlab = "Education", y = Fertility, ylab = "Fertility", ylim = c(0,100), 
-     main = "Swiss Fertility and Education Indicators", pch = 19, col="black")
-abline(simple.regression_FertilityEdcuation, col = "red")
-
-## Relationship Catholic Fertility ##
-# correlation between provinces with a greater proportion of catholic and high fertility rates 
-# Provinces which are catholic show the highest fertility rates
-# Provinces with an equaly share of catholics and protestants (50%) have a low fertility rate 
-# Provinces which are fully protestant show lower fertility rates compared to fully catholic 
-mydata %>%  
-  ggplot() +
-  geom_point(mapping = aes(x = Catholic, y = Fertility)) +
-  geom_smooth(mapping = aes(x = Catholic, y = Fertility), 
-              method = "lm") # Two regions as either high in catholic or low 
-
-## Relationship Infant Mortality Fertility ##
-# Some correlation between Infant Mortality and Fertility: greater percentage of children living past the 1st year correpsonding with a higher fertility measure. 
-mydata %>%  
-  ggplot() +
-  geom_point(mapping = aes(x = Infant.Mortality, y = Fertility)) +
-  geom_smooth(mapping = aes(x = Infant.Mortality, y = Fertility), 
-              method = "lm")
-
-#### Mapping relationships between different variables IV und DV (with simple regression model) ####
-
-## Relationship Examination and Agriculture regarding Fertility ##
-# Fertility rates high: for high agriculture and low examination
-mydata %>%
-  ggplot() +
-  xlab("Agriculture") +
-  ylab("Examination") +
-  geom_point(mapping = aes(
-    x = Agriculture,
-    y = Examination,
-    color = Fertility,
-    size = Fertility,
-    alpha = 0.5)) +
-  geom_smooth(mapping = aes(
-    x = Agriculture, 
-    y = Examination),
-    method = "lm")
-
-## Relationship Education and Agriculture regarding Fertility ##
-# similar pattern
-mydata %>%
-  ggplot() +
-  xlab("Agriculture") +
-  ylab("Education") +
-  geom_point(mapping = aes(
-    x = Agriculture,
-    y = Education,
-    color = Fertility,
-    size = Fertility,
-    alpha = 0.5)) +
-  geom_smooth(mapping = aes(
-    x = Agriculture, 
-    y = Education),
-    method = "lm")
-
-
-## Relationship Education and Examination regarding Fertility ##
-# Positive correlation between Examination and Education. Low fertility rates for residents with high education and more examination
-mydata %>%
-  ggplot() +
-  xlab("Examination") +
-  ylab("Education") +
-  geom_point(mapping = aes(
-    x = Examination,
-    y = Education,
-    color = Fertility,
-    size = Fertility,
-    alpha = 0.5)) +
-  geom_smooth(mapping = aes(
-    x = Examination, 
-    y = Education),
-    method = "lm")
-
-
-## Density Plot for Education and Fertility ## 
-
-ggplot(mydata, aes(x = Education, y = Fertility)) +
-  geom_bin2d() +
-  theme_bw() 
-
-################################
-######## Model analysis ########
-################################
-
-## Simple linear regression Fertility and Education ##
-reg_simple <- lm(Fertility ~ Education, data = mydata)
-summary(reg_simple)
-
-# Visualize the simple regression results 
-fit = fitted(reg_simple)
-plot(mydata$Education, mydata$Fertility)
-lines(mydata$Education, fit, col = 2)
-
-# Plot the residuals for the simple model (check if X and U are not related)
+## We then check the residuals to observe whether there is any pattern (homo- vs. heteroskedasticity) ##
+# We plot the residuals for the simple model (check if X and U are not related) #
 resi_simple = reg_simple$residuals
-plot(mydata$Education, resi_simple)
-lines(mydata$Education, rep(0, times = length(mydata$Education)), col = 2) # there should be no pattern, is there a pattern?
+plot(mydata$Education, resi_simple, main = "Residuals from the linear regression (Fertility ~ Education)", xlab = "Education", ylab = "Residuals")
+lines(mydata$Education, rep(0, times = length(mydata$Education)), col = 2) # no clear pattern can be observed in the residuals (can only be said for lower levels of Education given amount of datapoints)
+# Additionally, we run a Q-Q plot to determine whether the residuals follow a normal distribution #
+qqnorm(resi_simple)
+qqline(resi_simple)
+# Furthermore, a density plot of the residuals is inspected #
+plot(density(resi_simple), main = "Residuals for the Simple Linear Regression Model")
+# Lastly, a Breusch-Pagan test is applied to check whether there is heteroskedasticity in the data
+library(lmtest)
+bptest(reg_simple) #p-value of 0.5252
+# Based on the large p-value from the Breusch-Pagan test and the visual inspection, we cannot reject the 0 hypothesis of homoskedasticity
 
-# Plot 
-plot(reg_simple) # Normal QQ, Residuals vs. Leverage, Scale Location 
 
-qnorm(0.95) 
+######################### Polynomial Regression ##################################
+
 
 ## Test Linearity by adding polynomials
 # Define variables
@@ -495,3 +345,191 @@ lasso2.cv <- cv.glmnet(
 )
 coef_lasso2 <- coef(lasso2.cv, s = "lambda.min") # save for later comparison
 print(coef_lasso2) #Not really helpful from first impression (gotta look at it again)
+
+
+
+###################################################################################
+################################## BACKUP #########################################
+###################################################################################
+
+#### Calculating the relative frequencies #### <- evtl. l?schen, da beinahe keine Werte mehrmals. Evtl mit Intervallen arbeiten? Kommentar Franca: Ja, bei continous variable oder vielen values macht es keinen Sinn, Intervalle sinnvoller 
+# table(VARIABLE) Examination und Education einzige Variablen mit gleichen Variablen 
+# M?ssten wir nicht die Variablen durch die Anzahl der Beobachtungen teilen? 
+# length(mydata)=6. D.h. wir m?ssten wenn dann z.B. Fertility/length(mydata$fertility) berechnen? 
+# Kommentar Elias: Habe die Rel. angepasst.
+
+Rel.Freq_Fertility = Fertility / count(mydata)
+Rel.Freq_Agriculture = Agriculture / count(mydata)
+Rel.Freq_Examination = Examination / count(mydata)
+Rel.Freq_Education = Education / count(mydata)
+Rel.Freq_Catholic = Catholic / count(mydata)
+Rel.Freq_InfantMortality = Infant.Mortality / count(mydata)
+print(Rel.Freq_Education)
+
+
+
+
+
+## Creating frequency brackets for analysis ##
+lower_bound <- 60  ## defining the lower bound as 60 ##
+upper_bound <- 90  ## defining the upper bound as 90 ##
+Fertility_low <- c(Fertility <= lower_bound)  ## defining low fertility as values below the lower bound ##
+Fertility_average <- between(Fertility, lower_bound, upper_bound)  ## defining average fertility as values between the lower and the upper bound ##
+Fertility_high <- c(Fertility >= upper_bound)  ## defining high fertility as values above the upper bound ##
+
+Rel.Freq_Fertility_low <- sum(Fertility_low) / length(Fertility)  ## calculating the relative frequency of low fertility ##
+Rel.Freq_Fertility_average <- sum(Fertility_average) / length(Fertility)  ## calculating the relative frequency of average fertility ##
+Rel.Freq_Fertility_high <- sum(Fertility_high) / length(Fertility)  ## calculating the relative frequency of high fertility ##
+
+print(Rel.Freq_Fertility_low)
+print(Rel.Freq_Fertility_average)
+print(Rel.Freq_Fertility_high)
+
+
+# VISUALIZATION OF PLOTS #
+
+#### Mapping relationships between different variables IV und DV (with simple regression model) ####
+## Relationship Agriculture Fertility ##
+mydata %>%  
+  ggplot() +
+  geom_point(mapping = aes(x = Agriculture, y = Fertility)) +
+  geom_smooth(mapping = aes(x = Agriculture, y = Fertility),
+              method = "lm") 
+
+## Relationship Examination Fertility ##
+mydata %>%  
+  ggplot() +
+  geom_point(mapping = aes(x = Examination, y = Fertility)) +
+  geom_smooth(mapping = aes(x = Examination, y = Fertility), 
+              method = "lm") 
+
+mydata %>%
+  ggplot() +
+  xlab("Examination") +
+  ylab("Fertility") +
+  geom_point(mapping = aes(
+    x = Examination,
+    y = Fertility,
+    color = Examination,
+    size = Fertility,
+    alpha = 0.5)) +
+  geom_smooth(mapping = aes(
+    x = Examination, 
+    y = Fertility),
+    method = "lm")
+
+## Relationship Education Fertility ##
+mydata %>%  
+  ggplot() +
+  geom_point(mapping = aes(x = Education, y = Fertility)) +
+  geom_smooth(mapping = aes(x = Education, y = Fertility), 
+              method = "lm") + 
+  ylim(0, 100)
+
+mydata %>%
+  ggplot() +
+  xlab("Education") +
+  ylab("Fertility") +
+  geom_point(mapping = aes(
+    x = Education,
+    y = Fertility,
+    color = Education,
+    size = Fertility,
+    alpha = 0.5)) +
+  geom_smooth(mapping = aes(
+    x = Education, 
+    y = Fertility),
+    method = "lm") +
+  ylim(0, 100)
+
+
+## Relationship Catholic Fertility ##
+# correlation between provinces with a greater proportion of catholic and high fertility rates 
+# Provinces which are catholic show the highest fertility rates
+# Provinces with an equaly share of catholics and protestants (50%) have a low fertility rate 
+# Provinces which are fully protestant show lower fertility rates compared to fully catholic 
+mydata %>%  
+  ggplot() +
+  geom_point(mapping = aes(x = Catholic, y = Fertility)) +
+  geom_smooth(mapping = aes(x = Catholic, y = Fertility), 
+              method = "lm") # Two regions as either high in catholic or low 
+
+## Relationship Infant Mortality Fertility ##
+# Some correlation between Infant Mortality and Fertility: greater percentage of children living past the 1st year correpsonding with a higher fertility measure. 
+mydata %>%  
+  ggplot() +
+  geom_point(mapping = aes(x = Infant.Mortality, y = Fertility)) +
+  geom_smooth(mapping = aes(x = Infant.Mortality, y = Fertility), 
+              method = "lm")
+
+#### Mapping relationships between different variables IV und DV (with simple regression model) ####
+
+## Relationship Examination and Agriculture regarding Fertility ##
+# Fertility rates high: for high agriculture and low examination
+mydata %>%
+  ggplot() +
+  xlab("Agriculture") +
+  ylab("Examination") +
+  geom_point(mapping = aes(
+    x = Agriculture,
+    y = Examination,
+    color = Fertility,
+    size = Fertility,
+    alpha = 0.5)) +
+  geom_smooth(mapping = aes(
+    x = Agriculture, 
+    y = Examination),
+    method = "lm")
+
+## Relationship Education and Agriculture regarding Fertility ##
+# similar pattern
+mydata %>%
+  ggplot() +
+  xlab("Agriculture") +
+  ylab("Education") +
+  geom_point(mapping = aes(
+    x = Agriculture,
+    y = Education,
+    color = Fertility,
+    size = Fertility,
+    alpha = 0.5)) +
+  geom_smooth(mapping = aes(
+    x = Agriculture, 
+    y = Education),
+    method = "lm")
+
+
+## Relationship Education and Examination regarding Fertility ##
+# Positive correlation between Examination and Education. Low fertility rates for residents with high education and more examination
+mydata %>%
+  ggplot() +
+  xlab("Examination") +
+  ylab("Education") +
+  geom_point(mapping = aes(
+    x = Examination,
+    y = Education,
+    color = Fertility,
+    size = Fertility,
+    alpha = 0.5)) +
+  geom_smooth(mapping = aes(
+    x = Examination, 
+    y = Education),
+    method = "lm")
+
+
+
+
+
+## Density Plot for Education and Fertility ## 
+
+ggplot(mydata, aes(x = Education, y = Fertility)) +
+  geom_bin2d() +
+  theme_bw() 
+
+
+## What does this do? Was in chapter "Linear Regression model" with the residuals check
+# Plot 
+plot(reg_simple) # Normal QQ, Residuals vs. Leverage, Scale Location 
+
+qnorm(0.95) 
+
