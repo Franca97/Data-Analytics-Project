@@ -262,39 +262,6 @@ resettest(reg_simple, power = 2:3, type = "regressor") # p-value of 61.2% sugges
 
 ############################################ END #############################################
 
-### Diagnostics ###
-# Fit the model and add a fitted line to the scatterplot 
-plot(Fertility ~ Education, data = mydata, col = "grey", pch = 20, main = "Simple Model")
-fit_1 = lm(Fertility ~ Education, data = mydata)
-abline(fit_1, col = "green", lwd = 3)
-
-# Fitted versus residuals plot: constant variance if the spread of the residuals is roughly the same; if the mean is roughly zero the linearity assumption holds 
-plot(fitted(fit_1), resid(fit_1), col = "grey", pch = 20,
-     xlab = "Fitted", ylab = "Residuals", main = "Simple Model: fitted vs. resiudals")
-abline(h = 0, col = "darkorange", lwd = 2)
-
-# Breusch Pagan Test: Formal test for homoscedasticity 
-install.packages("lmtest")
-library(lmtest)
-
-bptest(fit_1) # large p value we dont reject h0 of homoscedasticity --> all good!
-
-# Normal Q-Q Plots for normal distribution of residuals 
-qqnorm(resid(fit_1), main = "Normal Q-Q Plot, fit_1", col = "darkgrey")
-qqline(resid(fit_1), col = "dodgerblue", lwd = 2)
-
-# formal solution for normal distribution of residuals 
-shapiro.test(resid(fit_1))
-
-
-par(mfrow = c(2,2))
-plot(reg_simple) 
-# Plot 1: Residual plot, no pattern observed constant variance assumption holds 
-# Plot 2: Normal Q-Q plot, normality assumption holds 
-# Plot 3: some influential points 
-
-
-
 ## Multiple Regression 
 Reg_full <- lm(Fertility ~  Agriculture + Education + Examination + Catholic + Infant.Mortality, data = mydata)
 summary(Reg_full) # Examination not significant 
@@ -306,8 +273,8 @@ summary(Reg_fullwoexam)
 
 ## Perform a stepwise regression
 
-lm_swiss1 <- lm(Fertility ~ 1, data = mydata) # only intercept
-lm_swiss2 <- lm(Fertility ~ ., data = mydata) # full regression 
+lm_swiss1 <- lm(Fertility ~ 1, data = swiss) # only intercept
+lm_swiss2 <- lm(Fertility ~ ., data = swiss) # full regression 
 
 # Forward Regression
 step(lm_swiss1, direction = "forward",  scope = list(lower = lm_swiss1, upper = lm_swiss2))
@@ -316,7 +283,7 @@ step(lm_swiss1, direction = "forward",  scope = list(lower = lm_swiss1, upper = 
 step(lm_swiss2, direction = "backward")
 
 # Graphical Representation 
-model_eva <- leaps::regsubsets(Fertility ~ ., data = mydata, nbest = 2) # number of best models per number of included variables 
+model_eva <- leaps::regsubsets(Fertility ~ ., data = swiss, nbest = 2) # number of best models per number of included variables 
 print(summary(model_eva))
 
 print(summary(model_eva)$which)
