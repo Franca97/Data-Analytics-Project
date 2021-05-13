@@ -61,18 +61,14 @@ hist(Education, main = "Education", xlab = "Education") # Mostly lower levels of
 
 #### Density plot of Fertility as dependent variable #### 
 plot(density(Fertility), main = "Fertility")
-abline(v=c(68, mean(Fertility), median(Fertility)), col="gray94") # a little bit right skewed, mode is defined visually, check visually with hist if more data is on the right side 
-abline(v=c(mean(Fertility), median(Fertility)), col = "red") #negative skew given that the mean (70.14) is left of the median (70.4); mode does not make sense in my opinion given we have no value twice  
-#<> Isn't it skewed to the left? Kommentar Franca: right skewed: most of the data is on the right side of the mode, mean and median are > mode 
-# Merker Elias: Discuss skewnwess again
+abline(v=c(mean(Fertility), median(Fertility)), col="gray94") # Median and Mean close, almost normally distributed with some tail
 
 #### Creating a covariance and correlation matrix to observe potential dependencies #### 
 cov(mydata)
 cor_matrix = as.matrix(cor(mydata)) # correlations with response variable lower than .8.
 cor_matrix[upper.tri(cor_matrix)] <- NA
 print(cor_matrix, na.print = "")
-
-#### Plotting correlation matrix for improved visual inspection ####
+## Plotting correlation matrix for improved visual inspection ##
 require(lattice)
 levelplot(cor(mydata), xlab = "", ylab = "") # visible correlation between Fertility and Education & Examination. Also, highly negative correlation between Education and Agriculture (Instrumental Variable?)
 
@@ -147,6 +143,7 @@ mydata %>%
   ylim(0, 100)
 
 ## We then check the residuals to observe whether there is any pattern (homo- vs. heteroskedasticity) ##
+plot(reg_simple)
 # We plot the residuals for the simple model (check if X and U are not related) #
 resi_simple = reg_simple$residuals
 plot(mydata$Education, resi_simple, main = "Residuals from the linear regression (Fertility ~ Education)", xlab = "Education", ylab = "Residuals")
@@ -156,6 +153,8 @@ qqnorm(resi_simple)
 qqline(resi_simple)
 # Furthermore, a density plot of the residuals is inspected #
 plot(density(resi_simple), main = "Residuals for the Simple Linear Regression Model")
+# We check the normal distribution of the residuals with a Shapiro-Wilk test #
+shapiro.test(resi_simple) # p-value of 0.0592 so we cannot reject the 0 hypothesis of normal distribution
 # Lastly, a Breusch-Pagan test is applied to check whether there is heteroskedasticity in the data
 library(lmtest)
 bptest(reg_simple) #p-value of 0.5252
@@ -168,7 +167,6 @@ bptest(reg_simple) #p-value of 0.5252
 ## We therefore first define the variables of interest ##
 Education2 = Education^2
 Education3 = Education^3
-mydata <- cbind(mydata, Education2, Education3) # What is this for? Do we need it?
 # And check the variables for multicollinearity #
 cor(Education, Education2) # highly correlated 0.9361279
 cor(Education, Education3) # rel. highly correlated 0.8389176
@@ -193,7 +191,7 @@ fit_matrix[3,2] <- summary(reg_simple3)$adj.r.squared
 fit_matrix # we can see that the linear model offers the highest R squared
 
 ## Additionally, we want to inspect the different fits visually ##
-plot(Education, reg_simple3$fitted.values, col = "green", ylab = "Fitted Values", main = "Comparison of Value Fit for Polynomial Regression")
+plot(Education, reg_simple3$fitted.values, col = "blue", ylab = "Fitted Values", main = "Comparison of Value Fit for Polynomial Regression")
 points(Education, reg_simple2$fitted.values, col = "black")
 lines(Education, reg_simple$fitted.values, col = "red") # the small deviations of fit indicates that the linear model is sufficient to use
 
@@ -258,6 +256,8 @@ resettest(reg_simple, power = 2:3, type = "regressor") # p-value of 61.2% sugges
 
 ## Based on the previous findings, it can be concluded that the linear expression of the regressor seems reasonable
 
+
+######################### Multivariate Regression ##################################
 
 
 ############################################ END #############################################
@@ -406,40 +406,6 @@ print(coef_lasso2) #Not really helpful from first impression (gotta look at it a
 ###################################################################################
 ################################## BACKUP #########################################
 ###################################################################################
-
-#### Calculating the relative frequencies #### <- evtl. l?schen, da beinahe keine Werte mehrmals. Evtl mit Intervallen arbeiten? Kommentar Franca: Ja, bei continous variable oder vielen values macht es keinen Sinn, Intervalle sinnvoller 
-# table(VARIABLE) Examination und Education einzige Variablen mit gleichen Variablen 
-# M?ssten wir nicht die Variablen durch die Anzahl der Beobachtungen teilen? 
-# length(mydata)=6. D.h. wir m?ssten wenn dann z.B. Fertility/length(mydata$fertility) berechnen? 
-# Kommentar Elias: Habe die Rel. angepasst.
-
-Rel.Freq_Fertility = Fertility / count(mydata)
-Rel.Freq_Agriculture = Agriculture / count(mydata)
-Rel.Freq_Examination = Examination / count(mydata)
-Rel.Freq_Education = Education / count(mydata)
-Rel.Freq_Catholic = Catholic / count(mydata)
-Rel.Freq_InfantMortality = Infant.Mortality / count(mydata)
-print(Rel.Freq_Education)
-
-
-
-
-
-## Creating frequency brackets for analysis ##
-lower_bound <- 60  ## defining the lower bound as 60 ##
-upper_bound <- 90  ## defining the upper bound as 90 ##
-Fertility_low <- c(Fertility <= lower_bound)  ## defining low fertility as values below the lower bound ##
-Fertility_average <- between(Fertility, lower_bound, upper_bound)  ## defining average fertility as values between the lower and the upper bound ##
-Fertility_high <- c(Fertility >= upper_bound)  ## defining high fertility as values above the upper bound ##
-
-Rel.Freq_Fertility_low <- sum(Fertility_low) / length(Fertility)  ## calculating the relative frequency of low fertility ##
-Rel.Freq_Fertility_average <- sum(Fertility_average) / length(Fertility)  ## calculating the relative frequency of average fertility ##
-Rel.Freq_Fertility_high <- sum(Fertility_high) / length(Fertility)  ## calculating the relative frequency of high fertility ##
-
-print(Rel.Freq_Fertility_low)
-print(Rel.Freq_Fertility_average)
-print(Rel.Freq_Fertility_high)
-
 
 # VISUALIZATION OF PLOTS #
 
