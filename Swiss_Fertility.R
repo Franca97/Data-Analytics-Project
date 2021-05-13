@@ -164,48 +164,103 @@ bptest(reg_simple) #p-value of 0.5252
 
 ######################### Polynomial Regression ##################################
 
-
-## Test Linearity by adding polynomials
-# Define variables
-attach(mydata)
+#### To check whether a polynomial regression can increase explanatory power, we will run a quadratic and cubic regression ####
+## We therefore first define the variables of interest ##
 Education2 = Education^2
 Education3 = Education^3
-
-mydata <- cbind(mydata, Education2, Education3)
-
-# Regression with polynomials 
-
-reg_simple2 <- lm(Fertility ~ Education + Education2 + Education3, mydata)
-summary(reg_simple2) # p values are very large indicate that I am not confident that my Education has an impact on the fertility
-
-# Compare both models visually 
-plot(Education, reg_simple2$fitted); 
-lines(Education, reg_simple$fitted, col = "red") # if they are similar, the model should be linear, if the deviation is small the linear model is not wrong 
-
-## Multicollinearity 
+mydata <- cbind(mydata, Education2, Education3) # What is this for? Do we need it?
+# And check the variables for multicollinearity #
 cor(Education, Education2) # highly correlated 0.9361279
 cor(Education, Education3) # rel. highly correlated 0.8389176
 cor(Education2, Education3) # highly correlated 0.9734444
 
-## Smooth 
-#install.packages("np")
-library(np)
+## We then run the polynomial models, once as quadratic and once as cubic ##
+reg_simple2 <- lm(Fertility ~ Education + Education2)
+reg_simple3 <- lm(Fertility ~ Education + Education2 + Education3)
+summary(reg_simple2) # the very large p-values do not indicate a statistically significant impact of Education on Fertility for any power
+summary(reg_simple3) # the very large p-values do not indicate a statistically significant impact of Education on Fertility for any power
 
-# Estimate the optimal band with 
-Bandwidth=npregbw(Fertility~Education) # non parametric regression
-summary(Bandwidth) # optimal bandwidth is 6.76351
+## We want to extract the R squared and adj. R squared from all the models for better comparison ##
+fit_matrix <- matrix(NA, nrow = 3, ncol = 2)
+colnames(fit_matrix) <- c("R sq.", "Adj. R sq.")
+rownames(fit_matrix) <- c("Linear", "Quadratic", "Cubic")
+fit_matrix[1,1] <- summary(reg_simple)$r.squared
+fit_matrix[1,2] <- summary(reg_simple)$adj.r.squared
+fit_matrix[2,1] <- summary(reg_simple2)$r.squared
+fit_matrix[2,2] <- summary(reg_simple2)$adj.r.squared
+fit_matrix[3,1] <- summary(reg_simple3)$r.squared
+fit_matrix[3,2] <- summary(reg_simple3)$adj.r.squared
+fit_matrix # we can see that the linear model offers the highest R squared
 
-# Estimate the function using the optimal band width 
-npreg1=npreg(bws=Bandwidth)
+## Additionally, we want to inspect the different fits visually ##
+plot(Education, reg_simple3$fitted.values, col = "green", ylab = "Fitted Values", main = "Comparison of Value Fit for Polynomial Regression")
+points(Education, reg_simple2$fitted.values, col = "black")
+lines(Education, reg_simple$fitted.values, col = "red") # the small deviations of fit indicates that the linear model is sufficient to use
 
-## Compare the non-parametric regression with the univariate linear regression
-# Extract the fitted from npreg1 in a standard way: 
-My.fitted.values=fitted(npreg1)
+## Next, we run a non-parametric regression to support the visual findings ##
+# We first estimate the optimal bandwidth given our dataset #
+bandwidth <- npregbw(Fertility ~ Education)
+summary(bandwidth) # the optimal bandwidth is 6.76351
+# We then estimate the function using the optimal bandwidth #
+npreg1 <- npreg(bws = bandwidth)
+# We plot the results and add the linear regression to it #
+plot(bandwith, plot.errors.method = "bootstrap", main = "Non-parametric regression")
+lines(Education, simple_linear$fitted.values, col = "red")
 
-# Plot it: Compare a linear model to the flexible model  
-plot(Bandwidth,plot.errors.method="bootstrap")
-lines(Education,fitted(reg_simple), col="2" ) # adding the linear simple model to the graph, non parametric estimate does not look linear and not very similar to the linear model 
-dev.off()
+## Additionally, we perform a cross validation to further support the findings that a linear regression model offers the best results ##
+k <- 9
+sigma_simple <- vector(length = k)
+sigma_simple2 <- vector(length = k)
+sigma_simple3 <- vector(length = k)
+for(i in 1:k){
+  ind <- rep(0, times = 47)
+  a <- (i - 1) * 5 + 1
+  b <- i * 5
+  ind[a : b] = 1
+  Test.F = swiss$Fertility[ind == 1]
+  Test.E = swiss$Education[ind == 1]
+  Train.F = swiss$Fertility[ind == 0]
+  Train.E = swiss$Education[ind == 0]
+  # Defining the test sets
+  Train.E2 = Train.E^2
+  Train.E3 = Train.E^3
+  #Fitting the training data
+  reg_linear <- lm(Train.F ~ Train.E)
+  reg_quadratic <- lm(Train.F ~ Train.E + Train.E2)
+  reg_cubic <- lm(Train.F ~ Train.E + Train.E2 + Train.E3)
+  #Extract the fitted values
+  coef.1 <- reg_linear$coef
+  coef.2 <- reg_quadratic$coef
+  coef.3 <- reg_cubic$coef
+  #Calculate SSR on dataset
+  sigma_simple[i] <- sum((Test.F - coef.1[1] - coef.1[2] * Test.E)^2)
+  sigma_simple2[i] <- sum((Test.F - coef.2[1] - coef.2[2] * Test.E - coef.2[3] * (Test.E^2))^2)
+  sigma_simple3[i] <- sum((Test.F - coef.3[1] - coef.3[2] * Test.E - coef.3[3] * (Test.E^2) - coef.3[4] * (Test.E^3))^2)
+}
+# We then calculate the average SSR for all three models #
+avg_sigma_simple <- mean(sigma_simple)
+avg_sigma_simple2 <- mean(sigma_simple2)
+avg_sigma_simple3 <- mean(sigma_simple3)
+avg_sigma_simple
+avg_sigma_simple2
+avg_sigma_simple3
+# Finally, we create  a matrix to store the values #
+cross_validation_matrix <- matrix(NA, nrow = 3, ncol = 1)
+colnames(cross_validation_matrix) <- c("Average SSR")
+rownames(cross_validation_matrix) <- c("Linear", "Quadratic", "Cubic")
+cross_validation_matrix[1] <- avg_sigma_simple
+cross_validation_matrix[2] <- avg_sigma_simple2
+cross_validation_matrix[3] <- avg_sigma_simple3
+cross_validation_matrix
+
+## Lastly, we run a Ramsey RESET test for functional form ##
+resettest(reg_simple, power = 2:3, type = "regressor") # p-value of 61.2% suggests that adding second and third order of the regressor makes no statistically significant contribution to the model
+
+## Based on the previous findings, it can be concluded that the linear expression of the regressor seems reasonable
+
+
+
+############################################ END #############################################
 
 ### Diagnostics ###
 # Fit the model and add a fitted line to the scatterplot 
