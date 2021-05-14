@@ -43,7 +43,8 @@ library(GGally)
 #### Getting an overview of the Swiss Fertility dataset #### 
 help(swiss)
 View(swiss)
-mydata = swiss
+mydata = swiss[, 1:6]
+View(mydata)
 
 #### Re-naming the relevant variables for easier access ####
 attach(mydata)
@@ -276,7 +277,7 @@ resettest(reg_simple, power = 2:3, type = "regressor") # p-value of 61.2% sugges
 #### To further analyze the data and potentially increase the explanatory power of the model, we run different multivariate regressions ####
 
 #### First, we run a full regression with all available variables ####
-reg_full = lm(Fertility ~ Agriculture + Education + Examination + Catholic + Infant.Mortality, data = mydata)
+reg_full = lm(Fertility ~ Education + Agriculture + Examination + Catholic + Infant.Mortality, data = mydata)
 summary(reg_full) # Education is still highly significant from a statistical standpoint, however Examination does not seem to have a significant influence on Fertility
 # We check the model fit by investigating the observed vs. predicted plots #
 ols_plot_obs_fit(reg_full) # The model seems to fit pretty well based on this visual inspection
@@ -317,7 +318,7 @@ ols_plot_added_variable(reg_full) # The variable Examniation does not seem to ha
 ## We can therefore conclude that running the model without the variable Examination appears reasonable ##
 
 #### Based on our observations from above, we run another multivariate model, excluding the variable Examination ####
-reg_woEx = lm(Fertility ~ Agriculture + Education + Catholic + Infant.Mortality, data = mydata)
+reg_woEx = lm(Fertility ~ Education + Agriculture + Catholic + Infant.Mortality, data = mydata)
 summary(reg_woEx)
 # We again check the model fit #
 ols_plot_obs_fit(reg_woEx) # again, the fit seems to be pretty well
@@ -332,8 +333,51 @@ bptest(reg_woEx) # high p value, therefore no heteroskedasticity
 ols_vif_tol(reg_woEx) # Unsurprisingly, there is no multicollinearity here either
 
 #### Lastly, we want to make the variable Catholic a binary dummy variable (given its distribution in the dataset) and run the main regressions again ####
+# First, we need to add a column with the dummy variables to the data set #
+swiss$CatholicDummy = ifelse(swiss$Catholic >= 50, 1, 0)
+View(swiss)
+# Then, we can run the respective simple and multivariate regression models again, including the Catholic Dummy Variable #
+reg_simple_Dummy = lm(Fertility ~ Education + CatholicDummy, data = swiss)
+summary(reg_simple_Dummy)
+reg_woEx_Dummy = lm(Fertility ~ Agriculture + Education + Infant.Mortality + CatholicDummy, data = swiss)
+summary(reg_woEx_Dummy)
 
-mydata2 = cbind(mydata, mydata$ReligionDummy = ifelse(mydata$Catholic >= 50, 1, 0))
+#### Finally, we create a Stargazer output of all the relavant models that were run ####
+stargazer(reg_simple, reg_simple_Dummy, reg_simple2, reg_simple3, reg_full, reg_woEx, reg_woEx_Dummy,
+          digits = 3,
+          header = FALSE,
+          font.size = "tiny",
+          align = TRUE,
+          no.space = TRUE,
+          table.layout = "=lt-a-s=n",
+          type = "html",
+          results = "asis",
+          message = FALSE,
+          out = "RegressionTable.html",
+          title = "Regression Analysis of Education on Fertility",
+          dep.var.labels.include = FALSE,
+          dep.var.caption = c("Impact on Fertility (in %)"),
+          model.numbers = FALSE,
+          covariate.labels = "Education", "Catholic Dummy", "Education^2", "Education^3", "Agriculture", "Examination", "Catholic", "Infant.Mor",
+          star.char = c("*", "**", "***"),
+          star.cutoffs = c(.1, .05, .01),
+          column.labels = c("(1)", "(2)", "(3)", "(4)", "(5)", "(6)", "(7)"),
+          notes = c("These regressions were estimated using  data for 47 provinces."))
+
+stargazer(reg_simple, reg_simple_Dummy, reg_simple2, reg_simple3, reg_full, reg_woEx, reg_woEx_Dummy,
+          digits = 3,
+          header = FALSE,
+          font.size = "tiny",
+          align = TRUE,
+          no.space = TRUE,
+          table.layout = "=lt-a-s=n",
+          type = "html",
+          out = "RegressionTable.html",
+          title = "Regression Analysis of Education on Fertility",
+          dep.var.labels.include = FALSE,
+          dep.var.caption = c("Impact on Fertility (in %)"),
+          results = "asis",
+          echo = FALSE)
 
 
 ############################################ END #############################################
@@ -350,11 +394,11 @@ mydata2 = cbind(mydata, mydata$ReligionDummy = ifelse(mydata$Catholic >= 50, 1, 
 # Regularization parameter lambda governs degree of how much coefficients are penalized (lambda =0 would be normal OLS)
 # Ridge adds quadratic parts to the penalty (SST: i think not necessary, Ridge supposed to work well if there are many large parameters of about the same value)
 set.seed (20210508)
-lasso_x <- as.matrix(swiss[ ,2:6])
+lasso_x <- as.matrix(mydata[ ,2:6])
 lasso_y <- swiss$Fertility
 #partitioning is needed for learning within the test/train dataset (splitting data into train and test data)
-size <- floor(0.75 * nrow(swiss)) # Generate variable with the rows in training data
-training_set <- sample(seq_len(nrow(swiss)), size = size)
+size <- floor(0.75 * nrow(mydata)) # Generate variable with the rows in training data
+training_set <- sample(seq_len(nrow(mydata)), size = size)
 # In theory one could loop this over different seeds to optimize
 
 # Perform Lasso cross validation to find optimal lambda
