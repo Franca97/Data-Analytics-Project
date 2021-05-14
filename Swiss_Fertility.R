@@ -10,6 +10,12 @@ install.packages("moments")
 install.packages("stargazer")
 install.packages("leaps")
 install.packages("np")
+install.packages("mctest")
+install.packages("faraway")
+install.packages("lattice")
+install.packages("olsrr")
+install.packages("corrplot")
+install.packages("GGally")
 
 #### Installing the necessary libraries ####
 library(datasets.load)
@@ -27,6 +33,12 @@ library(leaps)
 library(glmnet)
 library(np)
 library(lmtest)
+library(mctest)
+library(faraway)
+library(lattice)
+library(olsrr)
+library(corrplot)
+library(GGally)
 
 #### Getting an overview of the Swiss Fertility dataset #### 
 help(swiss)
@@ -69,12 +81,11 @@ cor_matrix = as.matrix(cor(mydata)) # correlations with response variable lower 
 cor_matrix[upper.tri(cor_matrix)] <- NA
 print(cor_matrix, na.print = "")
 ## Plotting correlation matrix for improved visual inspection ##
-require(lattice)
 levelplot(cor(mydata), xlab = "", ylab = "") # visible correlation between Fertility and Education & Examination. Also, highly negative correlation between Education and Agriculture (Instrumental Variable?)
 
 #### General plot of all variables for preliminary assumptions regarding model fit ####
 pairs(mydata, upper.panel = NULL, pch = 20, cex = 1.25) # assumption: linear relationship between Education and Examination/Examination and Agriculture 
-
+ggpairs(mydata)
 
 ############################ Exploring the Data ####################################
 
@@ -142,8 +153,12 @@ mydata %>%
     method = "lm") +
   ylim(0, 100)
 
+# We check for the fit of the model #
+ols_plot_obs_fit(reg_simple) # The fit does not seem completely off, but could be further improved
+
 ## We then check the residuals to observe whether there is any pattern (homo- vs. heteroskedasticity) ##
 plot(reg_simple)
+ols_plot_diagnostics(reg_simple)
 # We plot the residuals for the simple model (check if X and U are not related) #
 resi_simple = reg_simple$residuals
 plot(mydata$Education, resi_simple, main = "Residuals from the linear regression (Fertility ~ Education)", xlab = "Education", ylab = "Residuals")
@@ -156,7 +171,6 @@ plot(density(resi_simple), main = "Residuals for the Simple Linear Regression Mo
 # We check the normal distribution of the residuals with a Shapiro-Wilk test #
 shapiro.test(resi_simple) # p-value of 0.0592 so we cannot reject the 0 hypothesis of normal distribution
 # Lastly, a Breusch-Pagan test is applied to check whether there is heteroskedasticity in the data
-library(lmtest)
 bptest(reg_simple) #p-value of 0.5252
 # Based on the large p-value from the Breusch-Pagan test and the visual inspection, we cannot reject the 0 hypothesis of homoskedasticity
 
@@ -180,7 +194,7 @@ summary(reg_simple3) # the very large p-values do not indicate a statistically s
 
 ## We want to extract the R squared and adj. R squared from all the models for better comparison ##
 fit_matrix <- matrix(NA, nrow = 3, ncol = 2)
-colnames(fit_matrix) <- c("R sq.", "Adj. R sq.")
+colnames(fit_matrix) <- c("R2", "AdjR2")
 rownames(fit_matrix) <- c("Linear", "Quadratic", "Cubic")
 fit_matrix[1,1] <- summary(reg_simple)$r.squared
 fit_matrix[1,2] <- summary(reg_simple)$adj.r.squared
@@ -259,49 +273,71 @@ resettest(reg_simple, power = 2:3, type = "regressor") # p-value of 61.2% sugges
 
 ######################### Multivariate Regression ##################################
 
+#### To further analyze the data and potentially increase the explanatory power of the model, we run different multivariate regressions ####
+
+#### First, we run a full regression with all available variables ####
+reg_full = lm(Fertility ~ Agriculture + Education + Examination + Catholic + Infant.Mortality, data = mydata)
+summary(reg_full) # Education is still highly significant from a statistical standpoint, however Examination does not seem to have a significant influence on Fertility
+# We check the model fit by investigating the observed vs. predicted plots #
+ols_plot_obs_fit(reg_full) # The model seems to fit pretty well based on this visual inspection
+# We run the model diagnostics on this extended model #
+par(mfrow = c(2,2))
+plot(reg_full) # There does not seem to be any heteroskedasticity in the model given the visual inspection of the residuals
+# We also run an additional package to check the model diagnostics #
+ols_plot_diagnostics(reg_full) # The residuals seem to be normally distributed and no heteroskedasticity present
+mydata[cooks.distance(reg_full) > 0.1,] # Porrentruy, Sierre, Neuchatel, Rive Droite and Rive Gauche are influential points according to the Cook's Distance parameter
+# We again check for normal distribution applying the Shapiro-Wilk test #
+resi_full = reg_full$residuals
+shapiro.test(resi_full) # p-value of 0.9318, so we cannot reject the 0 hypothesis of normal distribution
+# Lastly, we run the Breusch-Pagan test on our extended model #
+bptest(reg_full) #p-value of 0.321 lends support for homoskedasticity in the model
+## Further, we check for multicollinearity in the model given the inclusion of different variables ##
+ols_vif_tol(reg_full) # Based on the given values which are all below threshold of 4 / 5 and especially 10, there does not seem to be a problem with multicollinearity in the model
+# Lastly, we check whether any of the relationships tested in the model could better be expressed by applying a higher power of the regressor (polynomial) #
+# The residual plus component plots would indicate a possible non-linearity present and could suggest a transformation in the data #
+ols_plot_comp_plus_resid(reg_full) #Given the current dataset, there seems to be no need for any possible transformations
+
+#### Next, we want to check whether there could be a better (more efficient) model predicting the data, which could be based on fewer variables than the full model ####
+# As observed before, Examination does not seem to be statistically significant in the full regression model. This is now checked by applying a stepwise regression #
+step1 <- lm(Fertility ~ 1, data = mydata) # using only the intercept
+step2 <- lm(Fertility ~ ., data = mydata) # running the full regression
+# Next, we run the forward and backward regression #
+step(step1, direction = "forward", scope = list(lower = step1, upper = step2))
+step(step2, direction = "backward") # Both methods yield the same result: the best model does not include the variable "Examination"
+# We then plot the results for better visual inspection #
+model_eva <- leaps::regsubsets(Fertility ~ ., nbest = 2) # number of best models per number of included variables 
+print(summary(model_eva))
+print(summary(model_eva)$which) # it seems to become evident that including both variables Education and Examination decreases the goodness of the model
+# We can further visualize the BIC factor and AdjR2
+par(mfrow = c(1, 2))
+plot(model_eva, main ="Comparison of goodness of different models") #the lower the BIC, the better the model. The  best model includes Agriculture, Education, Catholic and Infant.Mortality 
+plot(model_eva, scale = "adjr2") # The highest and second highest adj. R2 are achieved by the full model and by excluding Examination
+# The same results can be seen when drawing the added variable plots of the residuals of all the included variables (variables with low importance of contribution show only weak linear relationship)
+ols_plot_added_variable(reg_full) # The variable Examniation does not seem to have a large contribution to the model
+## We can therefore conclude that running the model without the variable Examination appears reasonable ##
+
+#### Based on our observations from above, we run another multivariate model, excluding the variable Examination ####
+reg_woEx = lm(Fertility ~ Agriculture + Education + Catholic + Infant.Mortality, data = mydata)
+summary(reg_woEx)
+# We again check the model fit #
+ols_plot_obs_fit(reg_woEx) # again, the fit seems to be pretty well
+# We run a reduced model diagnostics, not expecting any different results from before #
+ols_plot_diagnostics(reg_woEx) # The residuals seem to be normally distributed and no heteroskedasticity present
+mydata[cooks.distance(reg_woEx) > 0.1,] # Only Porrentruy, Sierre and Rive Gauche are now influential points according to the Cook's Distance parameter
+# We run the Shapiro-Wilk and Breusch-Pagan test #
+resi_woEx = reg_woEx$residuals
+shapiro.test(resi_woEx) # large p value, therefore normal distribution of residuals
+bptest(reg_woEx) # high p value, therefore no heteroskedasticity
+# And lastly, we check once more for multicollinearity between the variables #
+ols_vif_tol(reg_woEx) # Unsurprisingly, there is no multicollinearity here either
+
+#### Lastly, we want to make the variable Catholic a binary dummy variable (given its distribution in the dataset) and run the main regressions again ####
+
+mydata2 = cbind(mydata, mydata$ReligionDummy = ifelse(mydata$Catholic >= 50, 1, 0))
+
 
 ############################################ END #############################################
 
-## Multiple Regression 
-Reg_full <- lm(Fertility ~  Agriculture + Education + Examination + Catholic + Infant.Mortality, data = mydata)
-summary(Reg_full) # Examination not significant 
-
-# Why exclude examination? (=> potential OVB )
-Reg_fullwoexam <- lm(Fertility ~  Agriculture + Education + Catholic + Infant.Mortality, data = mydata)
-summary(Reg_fullwoexam)
-
-
-## Perform a stepwise regression
-
-lm_swiss1 <- lm(Fertility ~ 1, data = swiss) # only intercept
-lm_swiss2 <- lm(Fertility ~ ., data = swiss) # full regression 
-
-# Forward Regression
-step(lm_swiss1, direction = "forward",  scope = list(lower = lm_swiss1, upper = lm_swiss2))
-
-# Backward Regression
-step(lm_swiss2, direction = "backward")
-
-# Graphical Representation 
-model_eva <- leaps::regsubsets(Fertility ~ ., data = swiss, nbest = 2) # number of best models per number of included variables 
-print(summary(model_eva))
-
-print(summary(model_eva)$which)
-
-# Visualizing BIC and AdjR2
-par(mfrow = c(1, 2))
-plot(model_eva) #the lower the bic the better the model best model includes agriculture, education, catholic and infant mortality 
-plot(model_eva, scale = "adjr2") # highest adj r2 all iv, second highest adjr2 includes all ivs except examination
-
-### Diagnostics ###
-par(mfrow = c(2,2))
-plot(Reg_full) 
-# Plot 1: Residual plot, no pattern observed constant variance assumption holds 
-# Plot 2: Normal Q-Q plot, normality assumption holds 
-# Plot 3: some influential points 
-
-## Identifying influential points 
-mydata[cooks.distance(Reg_full) > 0.1,] # Sierre, Rive Gauche, Porrentruy, Neuchatel, Rive Droite, Rive Gauche 
 
 ################################
 ############# Lasso ############
@@ -375,6 +411,10 @@ print(coef_lasso2) #Not really helpful from first impression (gotta look at it a
 ###################################################################################
 
 # VISUALIZATION OF PLOTS #
+
+# Another way of plotting the correlation matrix #
+corrplot(cor(mydata), method = "color")
+
 
 #### Mapping relationships between different variables IV und DV (with simple regression model) ####
 ## Relationship Agriculture Fertility ##
