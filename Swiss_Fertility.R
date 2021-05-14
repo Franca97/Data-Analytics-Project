@@ -342,66 +342,63 @@ summary(reg_simple_Dummy)
 reg_woEx_Dummy = lm(Fertility ~ Agriculture + Education + Infant.Mortality + CatholicDummy, data = swiss)
 summary(reg_woEx_Dummy)
 
-#### Finally, we create a Stargazer output of all the relavant models that were run ####
-stargazer(reg_simple, reg_simple_Dummy, reg_simple2, reg_simple3, reg_full, reg_woEx, reg_woEx_Dummy,
-          digits = 3,
-          header = FALSE,
-          font.size = "tiny",
-          align = TRUE,
-          no.space = TRUE,
-          table.layout = "=lt-a-s=n",
-          type = "html",
-          results = "asis",
-          message = FALSE,
-          out = "RegressionTable.html",
-          title = "Regression Analysis of Education on Fertility",
-          dep.var.labels.include = FALSE,
-          dep.var.caption = c("Impact on Fertility (in %)"),
-          model.numbers = FALSE,
-          covariate.labels = "Education", "Catholic Dummy", "Education^2", "Education^3", "Agriculture", "Examination", "Catholic", "Infant.Mor",
-          star.char = c("*", "**", "***"),
-          star.cutoffs = c(.1, .05, .01),
-          column.labels = c("(1)", "(2)", "(3)", "(4)", "(5)", "(6)", "(7)"),
-          notes = c("These regressions were estimated using  data for 47 provinces."))
-
-stargazer(reg_simple, reg_simple_Dummy, reg_simple2, reg_simple3, reg_full, reg_woEx, reg_woEx_Dummy,
-          digits = 3,
-          header = FALSE,
-          font.size = "tiny",
-          align = TRUE,
-          no.space = TRUE,
-          table.layout = "=lt-a-s=n",
+#### Finally, we create a Stargazer output of all the relevant models that were run ####
+## Full table ##
+stargazer(reg_simple, reg_simple2, reg_simple3, reg_full, reg_woEx, reg_simple_Dummy, reg_woEx_Dummy,
           type = "html",
           out = "RegressionTable.html",
+          digits = 3,
+          header = FALSE,
+          align = TRUE,
+          no.space = TRUE,
           title = "Regression Analysis of Education on Fertility",
+          intercept.bottom = FALSE,
+          dep.var.caption = "Impact on Fertility (in %)",
           dep.var.labels.include = FALSE,
-          dep.var.caption = c("Impact on Fertility (in %)"),
-          results = "asis",
-          echo = FALSE)
+          covariate.labels = c("Constant", "Education", "Education<sup>2</sup>", "Education<sup>3</sup>", "Agriculture", "Examination", "Catholic", "Infant.Mortality", "CatholicDummy"),
+          column.labels = c("Simple", "Multivariate"),
+          column.separate = c(3, 4),
+          add.lines = list(c("Model", "Linear", "Quadratic", "Cubic", "Full", "w/o Exam.", "Dummy", "Dummy Full")),
+          notes = "SE provided in parantheses",
+          results = "asis")
+
+## Shortened table for paper ##
+stargazer(reg_simple, reg_simple2, reg_simple3, reg_full, reg_woEx, reg_simple_Dummy, reg_woEx_Dummy,
+          type = "html",
+          out = "RegressionTableShort.html",
+          digits = 3,
+          header = FALSE,
+          align = TRUE,
+          no.space = TRUE,
+          title = "Regression Analysis of Education on Fertility",
+          intercept.bottom = FALSE,
+          dep.var.caption = "Impact on Fertility (in %)",
+          dep.var.labels.include = FALSE,
+          covariate.labels = c("Constant", "Education", "Education<sup>2</sup>", "Education<sup>3</sup>", "Agriculture", "Examination", "Catholic", "Infant.Mortality", "CatholicDummy"),
+          column.labels = c("Simple", "Multivariate"),
+          column.separate = c(3, 4),
+          omit = c("Agriculture", "Examination", "Catholic", "Infant.Mortality", "CatholicDummy"),
+          add.lines = list(c("Model", "Linear", "Quadratic", "Cubic", "Full", "w/o Exam.", "Dummy", "Dummy Full")),
+          omit.stat = c("rsq", "f", "ser"),
+          notes = "SE provided in parantheses",
+          results = "asis")
 
 
-############################################ END #############################################
+############################ Lasso Regression #####################################
 
+#### Highly correlated variables could lead to an increased variance and introduce bias in the estimators
+#### Lasso and Ridge Regression is a solution to potential multicollinearity (variable selection and regularization)
+#### Lasso penalizes correlated variables: If there are two highly correlated variables, Lasso removes one randomly
+#### This is a caveat for interpretation and must be verified by economic reasoning
+#### The Regularization parameter Lambda governs to what degree the coefficients are penalized
 
-################################
-############# Lasso ############
-################################
-# Highly correlated variables such as [example] effect OLS
-# Variance explodes -> Multicolinearity
-# Lasso or Ridge Regression is a Solution for Multicolinearity (variable selection and regularization)
-# Lasso penalizes correlated variables: If there are two highly correlated variables, Lasso removes one randomly
-# This is a caveat for interpretation and must be verified by economic reasoning
-# Regularization parameter lambda governs degree of how much coefficients are penalized (lambda =0 would be normal OLS)
-# Ridge adds quadratic parts to the penalty (SST: i think not necessary, Ridge supposed to work well if there are many large parameters of about the same value)
+## First, partitioning is needed for learning within the test / dataset
 set.seed (20210508)
 lasso_x <- as.matrix(mydata[ ,2:6])
 lasso_y <- swiss$Fertility
-#partitioning is needed for learning within the test/train dataset (splitting data into train and test data)
 size <- floor(0.75 * nrow(mydata)) # Generate variable with the rows in training data
 training_set <- sample(seq_len(nrow(mydata)), size = size)
-# In theory one could loop this over different seeds to optimize
-
-# Perform Lasso cross validation to find optimal lambda
+# We then perform the Lasso cross validation to find the optimal Lambda
 lasso.cv <- cv.glmnet( 
   lasso_x[training_set,],
   lasso_y[training_set],
@@ -410,33 +407,27 @@ lasso.cv <- cv.glmnet(
   nfolds = 10, # number of folds
   alpha = 1 # alpha = 1 means ridge penalty =0 and only lasso penalty remains (inbetween is a mix)
 )
-
-# Save and inspect coefficients
+# The coefficients are saved for visual inspection 
 coef_lasso <- coef(lasso.cv, s = "lambda.min") # save for later comparison
-print(coef_lasso)
-# Seems like none have been dropped, to be compared to OLS
-
-# Plot the cross-validation curve (red dotted line)
-plot(lasso.cv)
-# grey bars are standard deviations along the lambda sequence
-# Lambda min is the value of lambda that gives the minimum mean cross-validated error (vertical dotted line)
+print(coef_lasso) # It seems like none have to be dropped to be compared to the OLS
+# We then plot the cross-validation curve
+plot(lasso.cv) # Grey bars are standard deviations along the Lambda sequence
+# We further extract the optimal Lambda (min. Lambda) that gives minimum mean cross-validated error (vertical dotted line)
 best_lambda <- lasso.cv$lambda.min
 print(best_lambda)
-
-# Predict on test data
+# We then predict for the test set and calculate the MSE
 predlasso1 <- predict(lasso.cv, newx = lasso_x[-training_set,], s = lasso.cv$lambda.min)
-# Calculate the MSE
 predMSElasso <- mean((lasso_y[-training_set] - predlasso1)^2)
-print(predMSElasso) # SST: that seems very far off, gotta check 
-rss <- sum((predlasso1 - lasso_y[-training_set])^2) #residial sum of squares 
+print(predMSElasso)
+rss <- sum((predlasso1 - lasso_y[-training_set])^2) #residual sum of squares 
 tss <- sum((lasso_y[-training_set] - mean(lasso_y[-training_set])) ^ 2)
 rsq <- 1 - rss/tss
-print(rsq) #R^2 of 0.22 is trash
-# However, our goal is not estimating on a test sample but rather understanding the effect of edu on fertility
-# For interpretation it would be interesting to have Lasso drop some variables (e.g Education)
-# In order to get that done, penalty must increase (its relatively low now)
-# Use Lasso without train/test split to see if edu gets penalized
-# Perform Lasso cross validation to find optimal lambda
+print(rsq)
+
+## However, our goal is not estimating on a test sample but rather understanding the effect of Education on Fertility
+# For interpretation purposes, it would be interesting to have Lasso drop some variables. Therefore, the penalty must increase
+# We therefore use Lasso without train/test split to see if Education gets penalized
+# A Lasso cross validation is performed to find the optimal Lambda
 lasso2.cv <- cv.glmnet( 
   lasso_x,
   lasso_y,
@@ -446,17 +437,18 @@ lasso2.cv <- cv.glmnet(
   alpha = 1 # alpha = 1 means ridge penalty =0 and only lasso penalty remains (inbetween is a mix)
 )
 coef_lasso2 <- coef(lasso2.cv, s = "lambda.min") # save for later comparison
-print(coef_lasso2) #Not really helpful from first impression (gotta look at it again)
+print(coef_lasso2) #From a visual inspection, this does not seem to add any additional explanatory power
 
+
+############################################ END #############################################
 
 
 ###################################################################################
 ################################## BACKUP #########################################
+################### Additional visualizations of plots ############################
 ###################################################################################
 
-# VISUALIZATION OF PLOTS #
-
-# Another way of plotting the correlation matrix #
+#### Another way of plotting the correlation matrix ####
 corrplot(cor(mydata), method = "color")
 
 
@@ -513,13 +505,12 @@ mydata %>%
     y = Fertility),
     method = "lm") +
   ylim(0, 100)
-
+# Density Plot for Education Fertility ## 
+ggplot(mydata, aes(x = Education, y = Fertility)) +
+  geom_bin2d() +
+  theme_bw()
 
 ## Relationship Catholic Fertility ##
-# correlation between provinces with a greater proportion of catholic and high fertility rates 
-# Provinces which are catholic show the highest fertility rates
-# Provinces with an equaly share of catholics and protestants (50%) have a low fertility rate 
-# Provinces which are fully protestant show lower fertility rates compared to fully catholic 
 mydata %>%  
   ggplot() +
   geom_point(mapping = aes(x = Catholic, y = Fertility)) +
@@ -527,17 +518,15 @@ mydata %>%
               method = "lm") # Two regions as either high in catholic or low 
 
 ## Relationship Infant Mortality Fertility ##
-# Some correlation between Infant Mortality and Fertility: greater percentage of children living past the 1st year correpsonding with a higher fertility measure. 
 mydata %>%  
   ggplot() +
   geom_point(mapping = aes(x = Infant.Mortality, y = Fertility)) +
   geom_smooth(mapping = aes(x = Infant.Mortality, y = Fertility), 
               method = "lm")
 
-#### Mapping relationships between different variables IV und DV (with simple regression model) ####
 
+#### Mapping relationships between different variables IV und DV (with simple regression model) ####
 ## Relationship Examination and Agriculture regarding Fertility ##
-# Fertility rates high: for high agriculture and low examination
 mydata %>%
   ggplot() +
   xlab("Agriculture") +
@@ -554,7 +543,6 @@ mydata %>%
     method = "lm")
 
 ## Relationship Education and Agriculture regarding Fertility ##
-# similar pattern
 mydata %>%
   ggplot() +
   xlab("Agriculture") +
@@ -570,9 +558,7 @@ mydata %>%
     y = Education),
     method = "lm")
 
-
 ## Relationship Education and Examination regarding Fertility ##
-# Positive correlation between Examination and Education. Low fertility rates for residents with high education and more examination
 mydata %>%
   ggplot() +
   xlab("Examination") +
@@ -589,19 +575,25 @@ mydata %>%
     method = "lm")
 
 
-
-
-
-## Density Plot for Education and Fertility ## 
-
-ggplot(mydata, aes(x = Education, y = Fertility)) +
-  geom_bin2d() +
-  theme_bw() 
-
-
-## What does this do? Was in chapter "Linear Regression model" with the residuals check
-# Plot 
-plot(reg_simple) # Normal QQ, Residuals vs. Leverage, Scale Location 
-
-qnorm(0.95) 
-
+#### Short Stargazer Plot v2 ####
+stargazer(reg_simple, reg_simple2, reg_simple3, reg_full, reg_woEx, reg_simple_Dummy, reg_woEx_Dummy,
+          type = "html",
+          out = "RegressionTableShort2.html",
+          digits = 3,
+          header = FALSE,
+          align = TRUE,
+          no.space = TRUE,
+          title = "Regression Analysis of Education on Fertility",
+          intercept.bottom = FALSE,
+          dep.var.caption = "Impact on Fertility (in %)",
+          dep.var.labels.include = FALSE,
+          covariate.labels = c("Constant", "Education", "Education<sup>2</sup>", "Education<sup>3</sup>", "Agriculture", "Examination", "Catholic", "Infant.Mortality", "CatholicDummy"),
+          column.labels = c("Simple", "Multivariate"),
+          column.separate = c(3, 4),
+          omit = c("Agriculture", "Examination", "Catholic", "Infant.Mortality", "CatholicDummy"),
+          add.lines = list(c("Model", "Linear", "Quadratic", "Cubic", "Full", "w/o Exam.", "Dummy", "Dummy Full"),
+                           c("Additional Variables?", "No", "No", "No", "Yes", "Yes", "Yes", "Yes"),
+                           c("Catholic Dummy?", "No", "No", "No", "No", "No", "Yes", "Yes")),
+          omit.stat = c("rsq", "f", "ser"),
+          notes = "SE provided in parantheses",
+          results = "asis")
