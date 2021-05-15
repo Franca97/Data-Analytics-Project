@@ -203,7 +203,7 @@ fit_matrix[2,1] <- summary(reg_simple2)$r.squared
 fit_matrix[2,2] <- summary(reg_simple2)$adj.r.squared
 fit_matrix[3,1] <- summary(reg_simple3)$r.squared
 fit_matrix[3,2] <- summary(reg_simple3)$adj.r.squared
-fit_matrix # we can see that the linear model offers the highest R squared
+fit_matrix # we can see that the linear model offers the highest Adj. R squared
 
 ## Additionally, we want to inspect the different fits visually ##
 plot(Education, reg_simple3$fitted.values, col = "blue", ylab = "Fitted Values", main = "Comparison of Value Fit for Polynomial Regression")
