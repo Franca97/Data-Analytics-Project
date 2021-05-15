@@ -56,7 +56,7 @@ attach(mydata)
 
 #### Getting a general overview of the data #### 
 summary(mydata) # Comment: Catholic: Median and Mean are completely different, also high sd (41)
-stargazer(mydata, type = "html", nobs = FALSE, style = "aer", iqr = FALSE , title = "Table 1 - Swiss Fertility Summary Statistics", digits = 2, out = "Summary Statistics")
+stargazer(mydata, median =T, type = "html", nobs = FALSE, style = "qje", iqr = FALSE , title = "Table 1 - Swiss Fertility Summary Statistics", digits = 2, out = "Summary statistics", column.sep.width="8pt")
 
 #### Drawing a boxplot for first inspection ####
 boxplot(mydata, ylab = "Occurrence", main = "Boxplot of the Swiss Fertility data set") # Comment: We have to watch out with "Catholic" as it is more or less a "binary" variable
@@ -203,7 +203,7 @@ fit_matrix[2,1] <- summary(reg_simple2)$r.squared
 fit_matrix[2,2] <- summary(reg_simple2)$adj.r.squared
 fit_matrix[3,1] <- summary(reg_simple3)$r.squared
 fit_matrix[3,2] <- summary(reg_simple3)$adj.r.squared
-fit_matrix # we can see that the linear model offers the highest Adj. R squared
+fit_matrix # we can see that the linear model offers the highest R squared
 
 ## Additionally, we want to inspect the different fits visually ##
 plot(Education, reg_simple3$fitted.values, col = "blue", ylab = "Fitted Values", main = "Comparison of Value Fit for Polynomial Regression")
