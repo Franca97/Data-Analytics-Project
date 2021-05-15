@@ -329,8 +329,11 @@ mydata[cooks.distance(reg_woEx) > 0.1,] # Only Porrentruy, Sierre and Rive Gauch
 resi_woEx = reg_woEx$residuals
 shapiro.test(resi_woEx) # large p value, therefore normal distribution of residuals
 bptest(reg_woEx) # high p value, therefore no heteroskedasticity
-# And lastly, we check once more for multicollinearity between the variables #
+# We check once more for multicollinearity between the variables #
 ols_vif_tol(reg_woEx) # Unsurprisingly, there is no multicollinearity here either
+# Lastly, we run a Ramsey RESET test for functional form #
+resettest(reg_woEx, power = 2:3, type = "regressor") # p-value of 0.6311 suggests that adding second and third order of the regressor makes no statistically significant contribution to the model
+
 
 #### Lastly, we want to make the variable Catholic a binary dummy variable (given its distribution in the dataset) and run the main regressions again ####
 # First, we need to add a column with the dummy variables to the data set #
