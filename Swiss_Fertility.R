@@ -578,6 +578,18 @@ mydata %>%
     method = "lm")
 
 
+### Log-Transformation of Education ### 
+
+# Regression
+lm_log.model = lm(Fertility~ log1p(Education), data = mydata)
+summary(lm_log.model)
+
+# Visualization
+ggplot(mydata, aes(log1p(Education), Fertility)) + 
+  geom_point() +
+  geom_smooth(method = "loess", se = FALSE)
+
+
 #### Short Stargazer Plot v2 ####
 stargazer(reg_simple, reg_simple2, reg_simple3, reg_full, reg_woEx, reg_simple_Dummy, reg_woEx_Dummy,
           type = "html",
