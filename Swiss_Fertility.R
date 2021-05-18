@@ -67,11 +67,13 @@ stargazer(mydata,
           digits = 2, 
           out = "Summary Statistics")
 
+
 #### Drawing a boxplot for first inspection ####
 boxplot(mydata, ylab = "Frequency", main = "Boxplot of the Swiss Fertility data set")
 # Catholic covering a wide range of values, almost making it a binary variable (either very high or very low)
 # Infant.Mortality very condensed
 # Education with some outliers
+
 
 #### Empirical Distribution Function Plots ####
 plot.ecdf(Fertility, xlab = "Fertility", main = "Empirical Distribution Function Fertility")
@@ -80,13 +82,16 @@ plot.ecdf(Examination, xlab = "Examination", main = "Empirical Distribution Func
 plot.ecdf(Catholic, xlab = "Catholic", main = "Empirical Distribution Function Catholic") # Comment: looks almost binary 
 plot.ecdf(Infant.Mortality, xlab = "Infant.Mortality", main = "Empirical Distribution Function Infant Mortality")
 
+
 #### Histogram of the distribution of fertility and education across the whole dataset ####
 hist(Fertility, main = "Fertility", xlab = "Fertility") # Fertility rates are mostly between 60 and 90% 
 hist(Education, main = "Education", xlab = "Education") # Mostly lower levels of education in the dataset
 
+
 #### Density plot of Fertility as dependent variable #### 
 plot(density(Fertility), main = "Fertility")
 abline(v=c(mean(Fertility), median(Fertility)), col="gray94") # Median and Mean close, almost normally distributed with some tail
+
 
 #### Creating a covariance and correlation matrix to observe potential dependencies #### 
 cov(mydata)
@@ -105,6 +110,7 @@ ggcorrplot(cor(mydata), hc.order = TRUE, # another way of visualizing the correl
            title = "Correlogram Swiss Data Set",
            ggtheme = theme_bw)
 
+
 #### General plot of all variables for preliminary assumptions regarding model fit ####
 pairs(mydata, upper.panel = NULL, pch = 20, cex = 1.25) # assumption: linear relationship between Education and Examination/Examination and Agriculture 
 ggpairs(mydata)
@@ -122,6 +128,7 @@ mydata %>%
   dplyr::select(Fertility) %>% 
   arrange(desc(Fertility)) %>% 
   tail(10) # Cities: Geneve, Lausanne, Nyone 
+
 
 #### Ranking of provinces with regards to Education ####
 ## Top 10 provinces with high education percentage ##
@@ -177,17 +184,14 @@ mydata %>%
 
 # We check for the fit of the model #
 ols_plot_obs_fit(reg_simple) # The fit does not seem completely off, but could be further improved
-
 ## We then check the residuals to observe whether there is any pattern (homo- vs. heteroskedasticity) ##
+par(mfrow = c(2,2))
 plot(reg_simple)
 ols_plot_diagnostics(reg_simple)
 # We plot the residuals for the simple model (check if X and U are not related) #
 resi_simple = reg_simple$residuals
 plot(mydata$Education, resi_simple, main = "Residuals from the linear regression (Fertility ~ Education)", xlab = "Education", ylab = "Residuals")
 lines(mydata$Education, rep(0, times = length(mydata$Education)), col = 2) # no clear pattern can be observed in the residuals (can only be said for lower levels of Education given amount of datapoints)
-# Additionally, we run a Q-Q plot to determine whether the residuals follow a normal distribution #
-qqnorm(resi_simple)
-qqline(resi_simple)
 # Furthermore, a density plot of the residuals is inspected #
 plot(density(resi_simple), main = "Residuals for the Simple Linear Regression Model")
 # We check the normal distribution of the residuals with a Shapiro-Wilk test #
@@ -196,16 +200,20 @@ shapiro.test(resi_simple) # p-value of 0.0592 so we cannot reject the 0 hypothes
 bptest(reg_simple) #p-value of 0.5252
 # Based on the large p-value from the Breusch-Pagan test and the visual inspection, we cannot reject the 0 hypothesis of homoskedasticity
 
-## We further test whether the dependent variable, Fertility, would need to be transformed using the Box-Cox test ##
-boxcox(reg_simple, data = mydata, lambda = seq(from = -2, to = 2, length = 50))
+
+#### We further test whether the dependent variable, Fertility, would need to be transformed using the Box-Cox test ####
+boxcox(reg_simple)
+## Given the Box-Cox test, we transform the dependent variable using the log function ##
 reg_simple_transformed = lm(log(Fertility) ~ Education, data = mydata)
 summary(reg_simple_transformed)
+# We then run the model diagnostics again #
+par(mfrow = c(2,2))
 plot(reg_simple_transformed)
-ols_plot_diagnostics(reg_simple_transformed)
-# We visualize the transformed regression
-plot(Education, log(Fertility))
-abline(reg_simple_transformed)
-# Further checking whether the transformation to log of the independent variable would make sense #
+ols_plot_diagnostics(reg_simple_transformed) # The residuals still seem to follow a normal distribution and there are no signs of heteroskedasticity
+resi_simple_transformed = reg_simple_transformed$residuals
+shapiro.test(resi_simple_transformed) # we do not reject the 0 hypo of normal distribution in the errors
+bptest(reg_simple_transformed) # given the large p-value of 0.5559, there seems to be no heteroskedasticity
+## Further, we check whether it makes sense to transform the dependent variable into log-values as well ##
 reg_simple_transformed_2 = lm(Fertility ~ log(Education), data = mydata)
 summary(reg_simple_transformed_2) # no improvement, therefore no log transformation of independent variable needed
 
@@ -318,19 +326,16 @@ ols_plot_obs_fit(reg_full) # The model seems to fit pretty well based on this vi
 # We run the model diagnostics on this extended model #
 par(mfrow = c(2,2))
 plot(reg_full) # There does not seem to be any heteroskedasticity in the model given the visual inspection of the residuals
-# We also run an additional package to check the model diagnostics #
 ols_plot_diagnostics(reg_full) # The residuals seem to be normally distributed and no heteroskedasticity present
 mydata[cooks.distance(reg_full) > 0.1,] # Porrentruy, Sierre, Neuchatel, Rive Droite and Rive Gauche are influential points according to the Cook's Distance parameter
-# We again check for normal distribution applying the Shapiro-Wilk test #
 resi_full = reg_full$residuals
 shapiro.test(resi_full) # p-value of 0.9318, so we cannot reject the 0 hypothesis of normal distribution
-# Lastly, we run the Breusch-Pagan test on our extended model #
 bptest(reg_full) #p-value of 0.321 lends support for homoskedasticity in the model
 ## Further, we check for multicollinearity in the model given the inclusion of different variables ##
 ols_vif_tol(reg_full) # Based on the given values which are all below threshold of 4 / 5 and especially 10, there does not seem to be a problem with multicollinearity in the model
-# Lastly, we check whether any of the relationships tested in the model could better be expressed by applying a higher power of the regressor (polynomial) #
-# The residual plus component plots would indicate a possible non-linearity present and could suggest a transformation in the data #
-ols_plot_comp_plus_resid(reg_full) #Given the current dataset, there seems to be no need for any possible transformations
+## Lastly, we check whether any of the relationships tested in the model could better be expressed by applying a higher power of the regressor (polynomial) #
+resettest(reg_full, power = 2:3, type = "regressor") # Large p-value does not indicate a need for polynomial transformation of any regressors
+
 
 #### Next, we want to check whether there could be a better (more efficient) model predicting the data, which could be based on fewer variables than the full model ####
 # As observed before, Examination does not seem to be statistically significant in the full regression model. This is now checked by applying a stepwise regression #
@@ -351,26 +356,52 @@ plot(model_eva, scale = "adjr2") # The highest and second highest adj. R2 are ac
 ols_plot_added_variable(reg_full) # The variable Examniation does not seem to have a large contribution to the model
 ## We can therefore conclude that running the model without the variable Examination appears reasonable ##
 
+
 #### Based on our observations from above, we run another multivariate model, excluding the variable Examination ####
 reg_woEx = lm(Fertility ~ Education + Agriculture + Catholic + Infant.Mortality, data = mydata)
 summary(reg_woEx)
 # We again check the model fit #
 ols_plot_obs_fit(reg_woEx) # again, the fit seems to be pretty well
-# We run a reduced model diagnostics, not expecting any different results from before #
+# We run the model diagnostics on this extended model #
+par(mfrow = c(2,2))
+plot(reg_woEx) # There does not seem to be any heteroskedasticity in the model given the visual inspection of the residuals
+# We are not expecting any different results from before #
 ols_plot_diagnostics(reg_woEx) # The residuals seem to be normally distributed and no heteroskedasticity present
 mydata[cooks.distance(reg_woEx) > 0.1,] # Only Porrentruy, Sierre and Rive Gauche are now influential points according to the Cook's Distance parameter
-# We run the Shapiro-Wilk and Breusch-Pagan test #
+# We run the Shapiro-Wilk and Breusch-Pagan test to test for normal distribution and heteroskedasticity in the residuals #
 resi_woEx = reg_woEx$residuals
 shapiro.test(resi_woEx) # large p value, therefore normal distribution of residuals
 bptest(reg_woEx) # high p value, therefore no heteroskedasticity
 # We check once more for multicollinearity between the variables #
 ols_vif_tol(reg_woEx) # Unsurprisingly, there is no multicollinearity here either
-# Lastly, we run a Ramsey RESET test for functional form #
+## Lastly, we check the functional form of the dependent and independent variable again ##
+# For the independent variables, we run a Ramsey RESET test for functional form #
 resettest(reg_woEx, power = 2:3, type = "regressor") # p-value of 0.6311 suggests that adding second and third order of the regressor makes no statistically significant contribution to the model
-## We again run a Box-Cox test to check whether the dependent variable could be transformed ##
-boxcox(reg_woEx) # The model seems to be accurately approximated, no need for transformation of the depdendent variable visible
+# Using Box-Cox test to check whether the dependent variable could be transformed #
+boxcox(reg_woEx) # The model seems to be accurately approximated, no need for transformation of the dependent variable visible
 
-#### Lastly, we want to make the variable Catholic a binary dummy variable (given its distribution in the dataset) and run the main regressions again ####
+
+#### Given the distribution of Catholic (almost binary distribution), we also include an interaction term between Education and Catholic ####
+reg_interact = lm(Fertility ~ Education + Agriculture + Catholic + Infant.Mortality + Education:Catholic, data = mydata)
+summary(reg_interact)
+## We again check for functional form of the dependent variable using the Box-Cox test ##
+boxcox(reg_interact) # Based on visual inspection (low Lambda value), we decide to transform the dependent variable using the log
+## We therefore run another regression model with the dependent variable transformed to log ##
+reg_interact_transformed = lm(log(Fertility) ~ Education + Agriculture + Catholic + Infant.Mortality + Education:Catholic, data = mydata)
+summary(reg_interact_transformed)
+## We again run the model diagnostics ##
+ols_plot_obs_fit(reg_interact_transformed) # Fit seems to be rather good for this model
+par(mfrow = c(2,2))
+plot(reg_interact_transformed)
+ols_plot_diagnostics(reg_interact_transformed) # Residuals seem normally distributed and no signs of heteroskedasticity 
+resi_interact_transformed = reg_interact_transformed$residuals
+shapiro.test(resi_interact_transformed) # Large p-value of 0.5451 supports normal distribution of residuals
+bptest(reg_interact_transformed) # No signs of heteroskedasticity
+ols_vif_tol(reg_interact_transformed) # Only interaction term that shows some weak signs of multicollinearity, therefore no cause for concern
+resettest(reg_interact_transformed, power = 2:3, type = "regressor") # Large p-value does not indicate a need for polynomial transformation of any regressors
+
+######################### Additional test ######################### 
+#### We we want to make the variable Catholic a binary dummy variable (given its distribution in the dataset) and run the main regressions again ####
 # First, we need to add a column with the dummy variables to the data set #
 swiss$CatholicDummy = ifelse(swiss$Catholic >= 50, 1, 0)
 View(swiss)
@@ -379,10 +410,11 @@ reg_simple_Dummy = lm(Fertility ~ Education + CatholicDummy, data = swiss)
 summary(reg_simple_Dummy)
 reg_woEx_Dummy = lm(Fertility ~ Agriculture + Education + Infant.Mortality + CatholicDummy, data = swiss)
 summary(reg_woEx_Dummy)
+###################################################################
 
 #### Finally, we create a Stargazer output of all the relevant models that were run ####
 ## Full table ##
-stargazer(reg_simple, reg_simple_transformed, reg_simple2, reg_simple3, reg_full, reg_woEx, reg_simple_Dummy, reg_woEx_Dummy,
+stargazer(reg_simple, reg_simple_transformed, reg_simple2, reg_simple3, reg_full, reg_woEx, reg_interact, reg_interact_transformed, reg_simple_Dummy, reg_woEx_Dummy,
           type = "html",
           out = "RegressionTable.html",
           digits = 3,
@@ -393,15 +425,17 @@ stargazer(reg_simple, reg_simple_transformed, reg_simple2, reg_simple3, reg_full
           intercept.bottom = FALSE,
           dep.var.caption = "Impact on Fertility",
           dep.var.labels.include = FALSE,
-          covariate.labels = c("Constant", "Education", "Education<sup>2</sup>", "Education<sup>3</sup>", "Agriculture", "Examination", "Catholic", "Infant.Mortality", "CatholicDummy"),
-          column.labels = c("Simple", "Multivariate"),
-          column.separate = c(2, 6),
-          add.lines = list(c("Model", "Linear", "Log Y", "Quadratic", "Cubic", "Full", "w/o Exam.", "Dummy", "Dummy Full")),
-          notes = "SE provided in parantheses",
+          covariate.labels = c("Intercept", "Education", "Education<sup>2</sup>", "Education<sup>3</sup>", "Agriculture", "Examination", "Catholic", "Infant.Mortality", "Education x Catholic", "CatholicDummy"),
+          column.labels = c("Simple", "Multivariate", "Dummy"),
+          column.separate = c(2, 6, 2),
+          add.lines = list(c("Model", "Linear", "Log Y", "Quadratic", "Cubic", "Full", "w/o Exam.", "Interact", "Int. / Log", "Dummy", "Dummy Full"),
+                           c("AIC", round(AIC(reg_simple), 1), "", round(AIC(reg_simple2), 1), round(AIC(reg_simple3), 1), round(AIC(reg_full), 1), round(AIC(reg_woEx), 1), round(AIC(reg_interact), 1), "", round(AIC(reg_simple_Dummy), 1), round(AIC(reg_woEx_Dummy), 1)),
+                           c("BIC", round(BIC(reg_simple), 1), "", round(BIC(reg_simple2), 1), round(BIC(reg_simple3), 1), round(BIC(reg_full), 1), round(BIC(reg_woEx), 1), round(BIC(reg_interact), 1), "", round(BIC(reg_simple_Dummy), 1), round(BIC(reg_woEx_Dummy), 1))),
+          notes = "SE provided in paranthesis",
           results = "asis")
 
 ## Shortened table for paper ##
-stargazer(reg_simple, reg_simple_transformed, reg_simple2, reg_simple3, reg_full, reg_woEx,
+stargazer(reg_simple, reg_simple3, reg_full, reg_woEx, reg_interact, reg_woEx_Dummy,
           type = "html",
           out = "RegressionTableShort.html",
           digits = 3,
@@ -412,12 +446,13 @@ stargazer(reg_simple, reg_simple_transformed, reg_simple2, reg_simple3, reg_full
           intercept.bottom = FALSE,
           dep.var.caption = "Impact on Fertility",
           dep.var.labels.include = FALSE,
-          covariate.labels = c("Constant", "Education", "Education<sup>2</sup>", "Education<sup>3</sup>", "Agriculture", "Examination", "Catholic", "Infant.Mortality"),
-          column.labels = c("Simple", "Multivariate"),
-          column.separate = c(2, 4),
-          add.lines = list(c("Model", "Linear", "Log Y", "Quadratic", "Cubic", "Full", "w/o Exam.")),
-          omit.stat = c("rsq", "f", "ser"),
-          notes = "SE provided in parantheses",
+          covariate.labels = c("Intercept", "Education", "Education<sup>2</sup>", "Education<sup>3</sup>", "Agriculture", "Examination", "Catholic", "Infant.Mortality", "Education x Catholic", "CatholicDummy"),
+          column.labels = c("Simple", "Multivariate", "Dummy"),
+          column.separate = c(1, 4, 1),
+          add.lines = list(c("AIC", round(AIC(reg_simple), 1), round(AIC(reg_simple3), 1), round(AIC(reg_full), 1), round(AIC(reg_woEx), 1), round(AIC(reg_interact), 1), round(AIC(reg_woEx_Dummy), 1))),
+          omit.stat = c("rsq", "n", "ser"),
+          df = F,
+          notes = "Based on 47 observations. SE provided in paranthesis",
           results = "asis")
 
 
@@ -610,27 +645,3 @@ mydata %>%
     x = Examination, 
     y = Education),
     method = "lm")
-
-
-#### Short Stargazer Plot v2 ####
-stargazer(reg_simple, reg_simple2, reg_simple3, reg_full, reg_woEx, reg_simple_Dummy, reg_woEx_Dummy,
-          type = "html",
-          out = "RegressionTableShort2.html",
-          digits = 3,
-          header = FALSE,
-          align = TRUE,
-          no.space = TRUE,
-          title = "Regression Analysis of Education on Fertility",
-          intercept.bottom = FALSE,
-          dep.var.caption = "Impact on Fertility (in %)",
-          dep.var.labels.include = FALSE,
-          covariate.labels = c("Constant", "Education", "Education<sup>2</sup>", "Education<sup>3</sup>", "Agriculture", "Examination", "Catholic", "Infant.Mortality", "CatholicDummy"),
-          column.labels = c("Simple", "Multivariate"),
-          column.separate = c(3, 4),
-          omit = c("Agriculture", "Examination", "Catholic", "Infant.Mortality", "CatholicDummy"),
-          add.lines = list(c("Model", "Linear", "Quadratic", "Cubic", "Full", "w/o Exam.", "Dummy", "Dummy Full"),
-                           c("Additional Variables?", "No", "No", "No", "Yes", "Yes", "Yes", "Yes"),
-                           c("Catholic Dummy?", "No", "No", "No", "No", "No", "Yes", "Yes")),
-          omit.stat = c("rsq", "f", "ser"),
-          notes = "SE provided in parantheses",
-          results = "asis")

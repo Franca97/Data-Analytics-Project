@@ -2,32 +2,36 @@
 <table style="text-align:center"><caption><strong>Regression Analysis of Education on Fertility</strong></caption>
 <tr><td colspan="7" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left"></td><td colspan="6">Impact on Fertility</td></tr>
 <tr><td></td><td colspan="6" style="border-bottom: 1px solid black"></td></tr>
-<tr><td style="text-align:left"></td><td colspan="2">Simple</td><td colspan="4">Multivariate</td></tr>
+<tr><td style="text-align:left"></td><td>Simple</td><td colspan="4">Multivariate</td><td>Dummy</td></tr>
 <tr><td style="text-align:left"></td><td>(1)</td><td>(2)</td><td>(3)</td><td>(4)</td><td>(5)</td><td>(6)</td></tr>
-<tr><td colspan="7" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">Constant</td><td>79.610<sup>***</sup></td><td>4.397<sup>***</sup></td><td>79.239<sup>***</sup></td><td>75.879<sup>***</sup></td><td>66.915<sup>***</sup></td><td>62.101<sup>***</sup></td></tr>
-<tr><td style="text-align:left"></td><td>(2.104)</td><td>(0.030)</td><td>(3.222)</td><td>(4.694)</td><td>(10.706)</td><td>(9.605)</td></tr>
-<tr><td style="text-align:left">Education</td><td>-0.862<sup>***</sup></td><td>-0.015<sup>***</sup></td><td>-0.803<sup>*</sup></td><td>0.038</td><td>-0.871<sup>***</sup></td><td>-0.980<sup>***</sup></td></tr>
-<tr><td style="text-align:left"></td><td>(0.145)</td><td>(0.002)</td><td>(0.416)</td><td>(0.950)</td><td>(0.183)</td><td>(0.148)</td></tr>
-<tr><td style="text-align:left">Education<sup>2</sup></td><td></td><td></td><td>-0.001</td><td>-0.048</td><td></td><td></td></tr>
-<tr><td style="text-align:left"></td><td></td><td></td><td>(0.009)</td><td>(0.048)</td><td></td><td></td></tr>
-<tr><td style="text-align:left">Education<sup>3</sup></td><td></td><td></td><td></td><td>0.001</td><td></td><td></td></tr>
-<tr><td style="text-align:left"></td><td></td><td></td><td></td><td>(0.001)</td><td></td><td></td></tr>
-<tr><td style="text-align:left">Agriculture</td><td></td><td></td><td></td><td></td><td>-0.172<sup>**</sup></td><td>-0.155<sup>**</sup></td></tr>
-<tr><td style="text-align:left"></td><td></td><td></td><td></td><td></td><td>(0.070)</td><td>(0.068)</td></tr>
-<tr><td style="text-align:left">Examination</td><td></td><td></td><td></td><td></td><td>-0.258</td><td></td></tr>
-<tr><td style="text-align:left"></td><td></td><td></td><td></td><td></td><td>(0.254)</td><td></td></tr>
-<tr><td style="text-align:left">Catholic</td><td></td><td></td><td></td><td></td><td>0.104<sup>***</sup></td><td>0.125<sup>***</sup></td></tr>
-<tr><td style="text-align:left"></td><td></td><td></td><td></td><td></td><td>(0.035)</td><td>(0.029)</td></tr>
-<tr><td style="text-align:left">Infant.Mortality</td><td></td><td></td><td></td><td></td><td>1.077<sup>***</sup></td><td>1.078<sup>***</sup></td></tr>
-<tr><td style="text-align:left"></td><td></td><td></td><td></td><td></td><td>(0.382)</td><td>(0.382)</td></tr>
-<tr><td colspan="7" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">Model</td><td>Linear</td><td>Log Y</td><td>Quadratic</td><td>Cubic</td><td>Full</td><td>w/o Exam.</td></tr>
-<tr><td style="text-align:left">Observations</td><td>47</td><td>47</td><td>47</td><td>47</td><td>47</td><td>47</td></tr>
-<tr><td style="text-align:left">Adjusted R<sup>2</sup></td><td>0.428</td><td>0.525</td><td>0.416</td><td>0.415</td><td>0.671</td><td>0.671</td></tr>
+<tr><td colspan="7" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">Intercept</td><td>79.610<sup>***</sup></td><td>75.879<sup>***</sup></td><td>66.915<sup>***</sup></td><td>62.101<sup>***</sup></td><td>53.752<sup>***</sup></td><td>61.010<sup>***</sup></td></tr>
+<tr><td style="text-align:left"></td><td>(2.104)</td><td>(4.694)</td><td>(10.706)</td><td>(9.605)</td><td>(9.919)</td><td>(10.340)</td></tr>
+<tr><td style="text-align:left">Education</td><td>-0.862<sup>***</sup></td><td>0.038</td><td>-0.871<sup>***</sup></td><td>-0.980<sup>***</sup></td><td>-0.515<sup>**</sup></td><td>-0.962<sup>***</sup></td></tr>
+<tr><td style="text-align:left"></td><td>(0.145)</td><td>(0.950)</td><td>(0.183)</td><td>(0.148)</td><td>(0.252)</td><td>(0.159)</td></tr>
+<tr><td style="text-align:left">Education<sup>2</sup></td><td></td><td>-0.048</td><td></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left"></td><td></td><td>(0.048)</td><td></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">Education<sup>3</sup></td><td></td><td>0.001</td><td></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left"></td><td></td><td>(0.001)</td><td></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">Agriculture</td><td></td><td></td><td>-0.172<sup>**</sup></td><td>-0.155<sup>**</sup></td><td>-0.134<sup>**</sup></td><td>-0.135<sup>*</sup></td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td>(0.070)</td><td>(0.068)</td><td>(0.066)</td><td>(0.073)</td></tr>
+<tr><td style="text-align:left">Examination</td><td></td><td></td><td>-0.258</td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td>(0.254)</td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">Catholic</td><td></td><td></td><td>0.104<sup>***</sup></td><td>0.125<sup>***</sup></td><td>0.207<sup>***</sup></td><td></td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td>(0.035)</td><td>(0.029)</td><td>(0.046)</td><td></td></tr>
+<tr><td style="text-align:left">Infant.Mortality</td><td></td><td></td><td>1.077<sup>***</sup></td><td>1.078<sup>***</sup></td><td>1.240<sup>***</sup></td><td>1.162<sup>***</sup></td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td>(0.382)</td><td>(0.382)</td><td>(0.372)</td><td>(0.407)</td></tr>
+<tr><td style="text-align:left">Education x Catholic</td><td></td><td></td><td></td><td></td><td>-0.011<sup>**</sup></td><td></td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td><td></td><td>(0.005)</td><td></td></tr>
+<tr><td style="text-align:left">CatholicDummy</td><td></td><td></td><td></td><td></td><td></td><td>8.743<sup>***</sup></td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td><td></td><td></td><td>(2.632)</td></tr>
+<tr><td colspan="7" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">AIC</td><td>348.4</td><td>351.3</td><td>326.1</td><td>325.2</td><td>321.9</td><td>331.5</td></tr>
+<tr><td style="text-align:left">Adjusted R<sup>2</sup></td><td>0.428</td><td>0.415</td><td>0.671</td><td>0.671</td><td>0.699</td><td>0.624</td></tr>
+<tr><td style="text-align:left">F Statistic</td><td>35.446<sup>***</sup></td><td>11.882<sup>***</sup></td><td>19.761<sup>***</sup></td><td>24.424<sup>***</sup></td><td>22.369<sup>***</sup></td><td>20.055<sup>***</sup></td></tr>
 <tr><td colspan="7" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left"><em>Note:</em></td><td colspan="6" style="text-align:right"><sup>*</sup>p<0.1; <sup>**</sup>p<0.05; <sup>***</sup>p<0.01</td></tr>
-<tr><td style="text-align:left"></td><td colspan="6" style="text-align:right">SE provided in parantheses</td></tr>
+<tr><td style="text-align:left"></td><td colspan="6" style="text-align:right">Based on 47 observations. SE provided in paranthesis</td></tr>
 </table>
 
 <table style="text-align:center"><caption><strong>Regression Analysis of Education on Fertility</strong></caption>
 <tr><td colspan="1" style="border-bottom: 1px solid black"></td></tr><tr><td>asis</td></tr>
-<tr><td colspan="1" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">SE provided in parantheses</td></tr>
+<tr><td colspan="1" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">Based on 47 observations. SE provided in paranthesis</td></tr>
 </table>
