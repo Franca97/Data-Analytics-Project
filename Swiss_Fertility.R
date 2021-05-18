@@ -40,6 +40,7 @@ library(olsrr)
 library(corrplot)
 library(GGally)
 
+
 #### Getting an overview of the Swiss Fertility dataset #### 
 help(swiss)
 View(swiss)
@@ -56,7 +57,7 @@ attach(mydata)
 
 #### Getting a general overview of the data #### 
 summary(mydata) # Comment: Catholic: Median and Mean are completely different, also high sd (41)
-stargazer(mydata, median =T, type = "html", nobs = FALSE, style = "qje", iqr = FALSE , title = "Table 1 - Swiss Fertility Summary Statistics", digits = 2, out = "Summary statistics", column.sep.width="8pt")
+stargazer(mydata, median =T, type = "html", nobs = FALSE, style = "qje", iqr = FALSE , title = "Table 1 - Swiss Fertility: Summary Statistics", digits = 2, out = "Summary statistics", column.sep.width="12pt")
 
 #### Drawing a boxplot for first inspection ####
 boxplot(mydata, ylab = "Occurrence", main = "Boxplot of the Swiss Fertility data set") # Comment: We have to watch out with "Catholic" as it is more or less a "binary" variable
@@ -356,7 +357,7 @@ stargazer(reg_simple, reg_simple2, reg_simple3, reg_full, reg_woEx, reg_simple_D
           no.space = TRUE,
           title = "Regression Analysis of Education on Fertility",
           intercept.bottom = FALSE,
-          dep.var.caption = "Impact on Fertility (in %)",
+          dep.var.caption = "Impact on Fertility",
           dep.var.labels.include = FALSE,
           covariate.labels = c("Constant", "Education", "Education<sup>2</sup>", "Education<sup>3</sup>", "Agriculture", "Examination", "Catholic", "Infant.Mortality", "CatholicDummy"),
           column.labels = c("Simple", "Multivariate"),
@@ -365,6 +366,25 @@ stargazer(reg_simple, reg_simple2, reg_simple3, reg_full, reg_woEx, reg_simple_D
           notes = "SE provided in parantheses",
           results = "asis")
 
+## Full table 2 Präsi##
+stargazer(reg_simple, reg_simple2, reg_simple3, reg_full, reg_woEx, reg_simple_Dummy, reg_woEx_Dummy,
+          type = "html",
+          out = "RegressionTable2.html",
+          digits = 3,
+          header = FALSE,
+          align = TRUE,
+          no.space = TRUE,
+          title = "Regression Analysis",
+          dep.var.caption = "Dependent Variable: Fertility",
+          intercept.bottom = FALSE,
+          dep.var.labels.include = FALSE,
+          covariate.labels = c("Constant", "Education", "Education<sup>2</sup>", "Education<sup>3</sup>", "Agriculture", "Examination", "Catholic", "Infant.Mortality", "CatholicDummy"),
+          column.labels = c("Simple", "Multivariate"),
+          column.separate = c(3, 4),
+          column.sep.width= "12",
+          add.lines = list(c("Model", "Linear", "Quadratic", "Cubic", "Full", "w/o Exam.", "Dummy", "Dummy Full")),
+          notes = "SE provided in parantheses")
+          
 ## Shortened table for paper ##
 stargazer(reg_simple, reg_simple2, reg_simple3, reg_full, reg_woEx, reg_simple_Dummy, reg_woEx_Dummy,
           type = "html",
