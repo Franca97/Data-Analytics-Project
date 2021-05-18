@@ -382,7 +382,7 @@ summary(reg_woEx_Dummy)
 
 #### Finally, we create a Stargazer output of all the relevant models that were run ####
 ## Full table ##
-stargazer(reg_simple, reg_simple2, reg_simple3, reg_full, reg_woEx, reg_simple_Dummy, reg_woEx_Dummy,
+stargazer(reg_simple, reg_simple_transformed, reg_simple2, reg_simple3, reg_full, reg_woEx, reg_simple_Dummy, reg_woEx_Dummy,
           type = "html",
           out = "RegressionTable.html",
           digits = 3,
@@ -391,17 +391,17 @@ stargazer(reg_simple, reg_simple2, reg_simple3, reg_full, reg_woEx, reg_simple_D
           no.space = TRUE,
           title = "Regression Analysis of Education on Fertility",
           intercept.bottom = FALSE,
-          dep.var.caption = "Impact on Fertility (in %)",
+          dep.var.caption = "Impact on Fertility",
           dep.var.labels.include = FALSE,
           covariate.labels = c("Constant", "Education", "Education<sup>2</sup>", "Education<sup>3</sup>", "Agriculture", "Examination", "Catholic", "Infant.Mortality", "CatholicDummy"),
           column.labels = c("Simple", "Multivariate"),
-          column.separate = c(3, 4),
-          add.lines = list(c("Model", "Linear", "Quadratic", "Cubic", "Full", "w/o Exam.", "Dummy", "Dummy Full")),
+          column.separate = c(2, 6),
+          add.lines = list(c("Model", "Linear", "Log Y", "Quadratic", "Cubic", "Full", "w/o Exam.", "Dummy", "Dummy Full")),
           notes = "SE provided in parantheses",
           results = "asis")
 
 ## Shortened table for paper ##
-stargazer(reg_simple, reg_simple2, reg_simple3, reg_full, reg_woEx, reg_simple_Dummy, reg_woEx_Dummy,
+stargazer(reg_simple, reg_simple_transformed, reg_simple2, reg_simple3, reg_full, reg_woEx,
           type = "html",
           out = "RegressionTableShort.html",
           digits = 3,
@@ -410,13 +410,12 @@ stargazer(reg_simple, reg_simple2, reg_simple3, reg_full, reg_woEx, reg_simple_D
           no.space = TRUE,
           title = "Regression Analysis of Education on Fertility",
           intercept.bottom = FALSE,
-          dep.var.caption = "Impact on Fertility (in %)",
+          dep.var.caption = "Impact on Fertility",
           dep.var.labels.include = FALSE,
-          covariate.labels = c("Constant", "Education", "Education<sup>2</sup>", "Education<sup>3</sup>", "Agriculture", "Examination", "Catholic", "Infant.Mortality", "CatholicDummy"),
+          covariate.labels = c("Constant", "Education", "Education<sup>2</sup>", "Education<sup>3</sup>", "Agriculture", "Examination", "Catholic", "Infant.Mortality"),
           column.labels = c("Simple", "Multivariate"),
-          column.separate = c(3, 4),
-          omit = c("Agriculture", "Examination", "Catholic", "Infant.Mortality", "CatholicDummy"),
-          add.lines = list(c("Model", "Linear", "Quadratic", "Cubic", "Full", "w/o Exam.", "Dummy", "Dummy Full")),
+          column.separate = c(2, 4),
+          add.lines = list(c("Model", "Linear", "Log Y", "Quadratic", "Cubic", "Full", "w/o Exam.")),
           omit.stat = c("rsq", "f", "ser"),
           notes = "SE provided in parantheses",
           results = "asis")
@@ -611,18 +610,6 @@ mydata %>%
     x = Examination, 
     y = Education),
     method = "lm")
-
-
-### Log-Transformation of Education ### 
-
-# Regression
-lm_log.model = lm(Fertility~ log1p(Education), data = mydata)
-summary(lm_log.model)
-
-# Visualization
-ggplot(mydata, aes(log1p(Education), Fertility)) + 
-  geom_point() +
-  geom_smooth(method = "loess", se = FALSE)
 
 
 #### Short Stargazer Plot v2 ####
