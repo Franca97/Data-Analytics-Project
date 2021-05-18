@@ -16,6 +16,7 @@ install.packages("lattice")
 install.packages("olsrr")
 install.packages("corrplot")
 install.packages("GGally")
+install.packages("ggcorrplot")
 
 #### Installing the necessary libraries ####
 library(datasets.load)
@@ -39,6 +40,7 @@ library(lattice)
 library(olsrr)
 library(corrplot)
 library(GGally)
+library(ggcorrplot)
 
 #### Getting an overview of the Swiss Fertility dataset #### 
 help(swiss)
@@ -56,10 +58,20 @@ attach(mydata)
 
 #### Getting a general overview of the data #### 
 summary(mydata) # Comment: Catholic: Median and Mean are completely different, also high sd (41)
-stargazer(mydata, type = "html", nobs = FALSE, style = "aer", iqr = FALSE , title = "Table 1 - Swiss Fertility Summary Statistics", digits = 2, out = "Summary Statistics")
+stargazer(mydata, 
+          type = "html", 
+          nobs = FALSE, 
+          style = "aer", 
+          iqr = FALSE , 
+          title = "Table 1 - Swiss Fertility Summary Statistics", 
+          digits = 2, 
+          out = "Summary Statistics")
 
 #### Drawing a boxplot for first inspection ####
-boxplot(mydata, ylab = "Occurrence", main = "Boxplot of the Swiss Fertility data set") # Comment: We have to watch out with "Catholic" as it is more or less a "binary" variable
+boxplot(mydata, ylab = "Frequency", main = "Boxplot of the Swiss Fertility data set")
+# Catholic covering a wide range of values, almost making it a binary variable (either very high or very low)
+# Infant.Mortality very condensed
+# Education with some outliers
 
 #### Empirical Distribution Function Plots ####
 plot.ecdf(Fertility, xlab = "Fertility", main = "Empirical Distribution Function Fertility")
@@ -78,11 +90,20 @@ abline(v=c(mean(Fertility), median(Fertility)), col="gray94") # Median and Mean 
 
 #### Creating a covariance and correlation matrix to observe potential dependencies #### 
 cov(mydata)
-cor_matrix = as.matrix(cor(mydata)) # correlations with response variable lower than .8.
+cor_matrix = as.matrix(cor(mydata)) # correlations with response variable lower than .8, therefore no signs of strong multicollinearity
 cor_matrix[upper.tri(cor_matrix)] <- NA
 print(cor_matrix, na.print = "")
 ## Plotting correlation matrix for improved visual inspection ##
 levelplot(cor(mydata), xlab = "", ylab = "") # visible correlation between Fertility and Education & Examination. Also, highly negative correlation between Education and Agriculture (Instrumental Variable?)
+ggcorrplot(cor(mydata), hc.order = TRUE, # another way of visualizing the correlation matrix
+           type = "lower",
+           digits = 3,
+           lab = TRUE,
+           lab_size = 5,
+           method = "square",
+           colors = c("tomato2", "white", "springgreen3"),
+           title = "Correlogram Swiss Data Set",
+           ggtheme = theme_bw)
 
 #### General plot of all variables for preliminary assumptions regarding model fit ####
 pairs(mydata, upper.panel = NULL, pch = 20, cex = 1.25) # assumption: linear relationship between Education and Examination/Examination and Agriculture 
@@ -128,7 +149,7 @@ summary(reg_simple)
 fit = fitted(reg_simple)
 plot(Education, Fertility, main = "Fertility and Education Regression", xlab = "Education", ylab = "Fertility")
 lines(Education, fit, col = 2)
-# Additionally, we visualize the same data with a more complex model #
+# Additionally, we visualize the same data with a more complex chart plot #
 mydata %>%  
   ggplot() +
   ggtitle("Fertility and Education Regression") +
@@ -174,6 +195,19 @@ shapiro.test(resi_simple) # p-value of 0.0592 so we cannot reject the 0 hypothes
 # Lastly, a Breusch-Pagan test is applied to check whether there is heteroskedasticity in the data
 bptest(reg_simple) #p-value of 0.5252
 # Based on the large p-value from the Breusch-Pagan test and the visual inspection, we cannot reject the 0 hypothesis of homoskedasticity
+
+## We further test whether the dependent variable, Fertility, would need to be transformed using the Box-Cox test ##
+boxcox(reg_simple, data = mydata, lambda = seq(from = -2, to = 2, length = 50))
+reg_simple_transformed = lm(log(Fertility) ~ Education, data = mydata)
+summary(reg_simple_transformed)
+plot(reg_simple_transformed)
+ols_plot_diagnostics(reg_simple_transformed)
+# We visualize the transformed regression
+plot(Education, log(Fertility))
+abline(reg_simple_transformed)
+# Further checking whether the transformation to log of the independent variable would make sense #
+reg_simple_transformed_2 = lm(Fertility ~ log(Education), data = mydata)
+summary(reg_simple_transformed_2) # no improvement, therefore no log transformation of independent variable needed
 
 
 ######################### Polynomial Regression ##################################
@@ -333,7 +367,8 @@ bptest(reg_woEx) # high p value, therefore no heteroskedasticity
 ols_vif_tol(reg_woEx) # Unsurprisingly, there is no multicollinearity here either
 # Lastly, we run a Ramsey RESET test for functional form #
 resettest(reg_woEx, power = 2:3, type = "regressor") # p-value of 0.6311 suggests that adding second and third order of the regressor makes no statistically significant contribution to the model
-
+## We again run a Box-Cox test to check whether the dependent variable could be transformed ##
+boxcox(reg_woEx) # The model seems to be accurately approximated, no need for transformation of the depdendent variable visible
 
 #### Lastly, we want to make the variable Catholic a binary dummy variable (given its distribution in the dataset) and run the main regressions again ####
 # First, we need to add a column with the dummy variables to the data set #
