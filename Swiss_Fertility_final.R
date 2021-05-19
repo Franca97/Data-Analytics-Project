@@ -61,7 +61,7 @@ attach(mydata)
 ###################################################################################
 
 #### Getting a general overview of the data #### 
-summary(mydata) # Comment: Catholic: Median and Mean are completely different, also high sd (41)
+summary(mydata) # Catholic: Median and Mean are completely different, also high sd (41)
 stargazer(mydata, 
           type = "html", 
           nobs = FALSE, 
@@ -72,19 +72,20 @@ stargazer(mydata,
           out = "Summary Statistics")
 
 
-#### Drawing a boxplot for first inspection ####
+#### Drawing a simple boxplot for first inspection ####
 boxplot(mydata, ylab = "Frequency", main = "Boxplot of the Swiss Fertility data set")
 # Catholic covering a wide range of values, almost making it a binary variable (either very high or very low)
 # Infant.Mortality very condensed
 # Education with some outliers
 
-## Drawing improved boxplot ##
+## Drawing an improved boxplot ##
+# First, we need to prepare the data accordingly in a data frame #
 ggplot_data_frame = data.frame(
   name = c(rep("Fertility", 47), rep("Agriculture", 47), rep("Examination", 47), rep("Education", 47), rep("Catholic", 47), rep("Infant.Mortality", 47)),
   value = c(as.vector(mydata$Fertility), as.vector(mydata$Agriculture), as.vector(mydata$Examination), as.vector(mydata$Education), as.vector(mydata$Catholic), as.vector(mydata$Infant.Mortality))
   )
 ggplot_data_frame$name = factor(ggplot_data_frame$name, levels = c("Fertility", "Agriculture", "Examination", "Education", "Catholic", "Infant.Mortality"))
-# Jitter boxplot #
+# Then, we plot a Jitter boxplot #
 ggplot_data_frame%>%
   ggplot(aes(x = name, y = value, fill = name)) +
   geom_boxplot() +
@@ -97,7 +98,7 @@ ggplot_data_frame%>%
   ) +
   ggtitle("Jitter boxplot of Swiss dataset") +
   xlab("")
-# Violin plot #
+# Additionally, we can execute Violin plot #
 ggplot_data_frame%>%
   ggplot(aes(x = name, y = value, fill = name)) +
   geom_violin() +
@@ -179,7 +180,7 @@ mydata %>%
 
 
 #### Ranking of provinces with regards to Education ####
-## Top 10 provinces with high education percentage ##
+## Top 10 provinces with highest education percentage ##
 mydata %>%  
   dplyr::select(Education) %>% 
   arrange(desc(Education)) %>% 
@@ -357,7 +358,7 @@ cross_validation_matrix[3] <- avg_sigma_simple3
 cross_validation_matrix
 
 ## Lastly, we run a Ramsey RESET test for functional form ##
-resettest(reg_simple, power = 2:3, type = "regressor") # p-value of 61.2% suggests that adding second and third order of the regressor makes no statistically significant contribution to the model
+resettest(reg_simple, power = 2:3, type = "regressor") # p-value of 0.612 suggests that adding second and third order of the regressor makes no statistically significant contribution to the model
 
 ## Based on the previous findings, it can be concluded that the linear expression of the regressor seems reasonable
 
@@ -562,7 +563,7 @@ lasso2.cv <- cv.glmnet(
   type.measure = "mse", 
   family = "gaussian", # non binary
   nfolds = 10, # number of folds
-  alpha = 1 # alpha = 1 means ridge penalty =0 and only lasso penalty remains (inbetween is a mix)
+  alpha = 1 # alpha = 1 means ridge penalty = 0 and only lasso penalty remains (inbetween is a mix)
 )
 coef_lasso2 <- coef(lasso2.cv, s = "lambda.min") # save for later comparison
 print(coef_lasso2) #From a visual inspection, this does not seem to add any additional explanatory power
@@ -669,7 +670,8 @@ mydata %>%
   geom_smooth(mapping = aes(
     x = Agriculture, 
     y = Examination),
-    method = "lm")
+    method = "lm") +
+  ylim(0, 40)
 
 ## Relationship Education and Agriculture regarding Fertility ##
 mydata %>%
