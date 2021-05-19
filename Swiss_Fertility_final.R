@@ -17,6 +17,8 @@ install.packages("olsrr")
 install.packages("corrplot")
 install.packages("GGally")
 install.packages("ggcorrplot")
+install.packages("hrbrthemes")
+install.packages("viridis")
 
 #### Installing the necessary libraries ####
 library(datasets.load)
@@ -41,6 +43,8 @@ library(olsrr)
 library(corrplot)
 library(GGally)
 library(ggcorrplot)
+library(hrbrthemes)
+library(viridis)
 
 #### Getting an overview of the Swiss Fertility dataset #### 
 help(swiss)
@@ -74,6 +78,38 @@ boxplot(mydata, ylab = "Frequency", main = "Boxplot of the Swiss Fertility data 
 # Infant.Mortality very condensed
 # Education with some outliers
 
+## Drawing improved boxplot ##
+ggplot_data_frame = data.frame(
+  name = c(rep("Fertility", 47), rep("Agriculture", 47), rep("Examination", 47), rep("Education", 47), rep("Catholic", 47), rep("Infant.Mortality", 47)),
+  value = c(as.vector(mydata$Fertility), as.vector(mydata$Agriculture), as.vector(mydata$Examination), as.vector(mydata$Education), as.vector(mydata$Catholic), as.vector(mydata$Infant.Mortality))
+  )
+ggplot_data_frame$name = factor(ggplot_data_frame$name, levels = c("Fertility", "Agriculture", "Examination", "Education", "Catholic", "Infant.Mortality"))
+# Jitter boxplot #
+ggplot_data_frame%>%
+  ggplot(aes(x = name, y = value, fill = name)) +
+  geom_boxplot() +
+  scale_fill_viridis(discrete = TRUE, alpha = 0.6, option = "A") +
+  geom_jitter(color = "black", size = 0.7, alpha = 0.9) +
+  theme_ipsum() +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(size = 11)
+  ) +
+  ggtitle("Jitter boxplot of Swiss dataset") +
+  xlab("")
+# Violin plot #
+ggplot_data_frame%>%
+  ggplot(aes(x = name, y = value, fill = name)) +
+  geom_violin() +
+  scale_fill_viridis(discrete = TRUE, alpha = 0.6, option = "A") +
+  theme_ipsum() +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(size = 11)
+  ) +
+  ggtitle("Violin chart of Swiss dataset") +
+  xlab("")
+
 
 #### Empirical Distribution Function Plots ####
 plot.ecdf(Fertility, xlab = "Fertility", main = "Empirical Distribution Function Fertility")
@@ -83,19 +119,22 @@ plot.ecdf(Catholic, xlab = "Catholic", main = "Empirical Distribution Function C
 plot.ecdf(Infant.Mortality, xlab = "Infant.Mortality", main = "Empirical Distribution Function Infant Mortality")
 
 
-#### Histogram of the distribution of fertility and education across the whole dataset ####
+#### Histogram and density plots of the distribution of fertility and education across the whole dataset ####
 hist(Fertility, main = "Fertility", xlab = "Fertility") # Fertility rates are mostly between 60 and 90% 
 hist(Education, main = "Education", xlab = "Education") # Mostly lower levels of education in the dataset
 
-
-#### Density plot of Fertility as dependent variable #### 
+## Density plot of Fertility as dependent variable ## 
 plot(density(Fertility), main = "Fertility")
 abline(v=c(mean(Fertility), median(Fertility)), col="gray94") # Median and Mean close, almost normally distributed with some tail
 
-#### Combined density plot and histogram ####
-plot(density(Fertility), main = "Fertility", xlab = "Fertility")
-rug(Fertility)
-hist(Fertility, fill = "transparent", freq = F, add = T)
+## Combined density plot and histogram with mean ##
+ggplot(mydata, aes(x = Fertility)) +
+  geom_histogram(aes(y = ..density..), colour = "black", fill = "grey", binwidth = 5) +
+  geom_density(alpha = .2, fill = "lightgrey") +
+  geom_vline(aes(xintercept = mean(Fertility)),
+             color = "red", linetype = "dashed", size = 1) +
+  labs(title = "Fertility histogram plot", xlab = "Fertility", ylab = "Density")
+
 
 #### Creating a covariance and correlation matrix to observe potential dependencies #### 
 cov(mydata)
