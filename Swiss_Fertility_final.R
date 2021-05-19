@@ -134,6 +134,13 @@ ggplot(mydata, aes(x = Fertility)) +
   geom_vline(aes(xintercept = mean(Fertility)),
              color = "red", linetype = "dashed", size = 1) +
   labs(title = "Fertility histogram plot", xlab = "Fertility", ylab = "Density")
+## Combined density plot and histogram with mean for education ##
+ggplot(mydata, aes(x = Education)) +
+  geom_histogram(aes(y = ..density..), colour = "black", fill = "lightblue", binwidth = 5) +
+  geom_density(alpha = .2, fill = "blue") +
+  geom_vline(aes(xintercept = mean(Education)),
+             color = "red", linetype = "dashed", size = 1) +
+  labs(title = "Education histogram plot", xlab = "Education", ylab = "Density")
 
 
 #### Creating a covariance and correlation matrix to observe potential dependencies #### 
@@ -470,7 +477,7 @@ stargazer(reg_simple, reg_simple_transformed, reg_simple2, reg_simple3, reg_full
           header = FALSE,
           align = TRUE,
           no.space = TRUE,
-          title = "Regression Analysis of Education on Fertility",
+          title = "Regression Analysis",
           intercept.bottom = FALSE,
           dep.var.caption = "Impact on Fertility",
           dep.var.labels.include = FALSE,
@@ -491,7 +498,7 @@ stargazer(reg_simple, reg_simple3, reg_full, reg_woEx, reg_interact, reg_woEx_Du
           header = FALSE,
           align = TRUE,
           no.space = TRUE,
-          title = "Regression Analysis of Education on Fertility",
+          title = "Regression Analysis",
           intercept.bottom = FALSE,
           dep.var.caption = "Impact on Fertility",
           dep.var.labels.include = FALSE,
