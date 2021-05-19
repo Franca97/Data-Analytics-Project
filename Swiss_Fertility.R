@@ -261,8 +261,8 @@ summary(bandwidth) # the optimal bandwidth is 6.76351
 # We then estimate the function using the optimal bandwidth #
 npreg1 <- npreg(bws = bandwidth)
 # We plot the results and add the linear regression to it #
-plot(bandwith, plot.errors.method = "bootstrap", main = "Non-parametric regression")
-lines(Education, simple_linear$fitted.values, col = "red")
+plot(bandwidth, plot.errors.method = "bootstrap", main = "Non-parametric regression")
+lines(Education, reg_simple$fitted.values, col = "red")
 
 ## Additionally, we perform a cross validation to further support the findings that a linear regression model offers the best results ##
 k <- 9
@@ -347,7 +347,7 @@ step2 <- lm(Fertility ~ ., data = mydata) # running the full regression
 step(step1, direction = "forward", scope = list(lower = step1, upper = step2))
 step(step2, direction = "backward") # Both methods yield the same result: the best model does not include the variable "Examination"
 # We then plot the results for better visual inspection #
-model_eva <- leaps::regsubsets(Fertility ~ ., nbest = 2) # number of best models per number of included variables 
+model_eva <- leaps::regsubsets(Fertility ~ ., nbest = 2, data = mydata) # number of best models per number of included variables 
 print(summary(model_eva))
 print(summary(model_eva)$which) # it seems to become evident that including both variables Education and Examination decreases the goodness of the model
 # We can further visualize the BIC factor and AdjR2
