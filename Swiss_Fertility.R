@@ -92,6 +92,10 @@ hist(Education, main = "Education", xlab = "Education") # Mostly lower levels of
 plot(density(Fertility), main = "Fertility")
 abline(v=c(mean(Fertility), median(Fertility)), col="gray94") # Median and Mean close, almost normally distributed with some tail
 
+#### Combined density plot and histogram ####
+plot(density(Fertility), main = "Fertility", xlab = "Fertility")
+rug(Fertility)
+hist(Fertility, fill = "transparent", freq = F, add = T)
 
 #### Creating a covariance and correlation matrix to observe potential dependencies #### 
 cov(mydata)
@@ -99,12 +103,11 @@ cor_matrix = as.matrix(cor(mydata)) # correlations with response variable lower 
 cor_matrix[upper.tri(cor_matrix)] <- NA
 print(cor_matrix, na.print = "")
 ## Plotting correlation matrix for improved visual inspection ##
-levelplot(cor(mydata), xlab = "", ylab = "") # visible correlation between Fertility and Education & Examination. Also, highly negative correlation between Education and Agriculture (Instrumental Variable?)
 ggcorrplot(cor(mydata), hc.order = TRUE, # another way of visualizing the correlation matrix
            type = "lower",
            digits = 3,
            lab = TRUE,
-           lab_size = 5,
+           lab_size = 4,
            method = "square",
            colors = c("tomato2", "white", "springgreen3"),
            title = "Correlogram Swiss Data Set",
@@ -112,8 +115,7 @@ ggcorrplot(cor(mydata), hc.order = TRUE, # another way of visualizing the correl
 
 
 #### General plot of all variables for preliminary assumptions regarding model fit ####
-pairs(mydata, upper.panel = NULL, pch = 20, cex = 1.25) # assumption: linear relationship between Education and Examination/Examination and Agriculture 
-ggpairs(mydata)
+ggpairs(mydata, upper = list(continuos = wrap("cor", size = 12)))
 
 ############################ Exploring the Data ####################################
 
@@ -350,10 +352,10 @@ print(summary(model_eva))
 print(summary(model_eva)$which) # it seems to become evident that including both variables Education and Examination decreases the goodness of the model
 # We can further visualize the BIC factor and AdjR2
 par(mfrow = c(1, 2))
-plot(model_eva, main ="Comparison of goodness of different models") #the lower the BIC, the better the model. The  best model includes Agriculture, Education, Catholic and Infant.Mortality 
+plot(model_eva, main ="Comparison of goodness") # The lower the BIC, the better the model. The  best model includes Agriculture, Education, Catholic and Infant.Mortality 
 plot(model_eva, scale = "adjr2") # The highest and second highest adj. R2 are achieved by the full model and by excluding Examination
 # The same results can be seen when drawing the added variable plots of the residuals of all the included variables (variables with low importance of contribution show only weak linear relationship)
-ols_plot_added_variable(reg_full) # The variable Examniation does not seem to have a large contribution to the model
+ols_plot_added_variable(reg_full) # The variable Examination does not seem to have a large contribution to the model
 ## We can therefore conclude that running the model without the variable Examination appears reasonable ##
 
 
@@ -384,6 +386,15 @@ boxcox(reg_woEx) # The model seems to be accurately approximated, no need for tr
 #### Given the distribution of Catholic (almost binary distribution), we also include an interaction term between Education and Catholic ####
 reg_interact = lm(Fertility ~ Education + Agriculture + Catholic + Infant.Mortality + Education:Catholic, data = mydata)
 summary(reg_interact)
+## We run the ususal model diagnostics for this new, extended model ##
+par(mfrow = c(2,2))
+plot(reg_interact)
+ols_plot_diagnostics(reg_interact) # Residuals seem normally distributed and no signs of heteroskedasticity 
+resi_interact = reg_interact$residuals
+shapiro.test(resi_interact) # Large p-value of 0.3102 supports normal distribution of residuals
+bptest(reg_interact) # No signs of heteroskedasticity
+ols_vif_tol(reg_interact) # Only interaction term that shows some weak signs of multicollinearity, therefore no cause for concern
+resettest(reg_interact, power = 2:3, type = "regressor") # Large p-value does not indicate a need for polynomial transformation of any regressors
 ## We again check for functional form of the dependent variable using the Box-Cox test ##
 boxcox(reg_interact) # Based on visual inspection (low Lambda value), we decide to transform the dependent variable using the log
 ## We therefore run another regression model with the dependent variable transformed to log ##
@@ -395,10 +406,9 @@ par(mfrow = c(2,2))
 plot(reg_interact_transformed)
 ols_plot_diagnostics(reg_interact_transformed) # Residuals seem normally distributed and no signs of heteroskedasticity 
 resi_interact_transformed = reg_interact_transformed$residuals
-shapiro.test(resi_interact_transformed) # Large p-value of 0.5451 supports normal distribution of residuals
+shapiro.test(resi_interact_transformed) # The p-value of 0.5451 supports normal distribution of residuals
 bptest(reg_interact_transformed) # No signs of heteroskedasticity
-ols_vif_tol(reg_interact_transformed) # Only interaction term that shows some weak signs of multicollinearity, therefore no cause for concern
-resettest(reg_interact_transformed, power = 2:3, type = "regressor") # Large p-value does not indicate a need for polynomial transformation of any regressors
+resettest(reg_interact_transformed, power = 2:3, type = "regressor") # Large p-value does also not indicate a need for polynomial transformation of any regressors
 
 ######################### Additional test ######################### 
 #### We we want to make the variable Catholic a binary dummy variable (given its distribution in the dataset) and run the main regressions again ####
@@ -428,10 +438,10 @@ stargazer(reg_simple, reg_simple_transformed, reg_simple2, reg_simple3, reg_full
           covariate.labels = c("Intercept", "Education", "Education<sup>2</sup>", "Education<sup>3</sup>", "Agriculture", "Examination", "Catholic", "Infant.Mortality", "Education x Catholic", "CatholicDummy"),
           column.labels = c("Simple", "Multivariate", "Dummy"),
           column.separate = c(2, 6, 2),
-          add.lines = list(c("Model", "Linear", "Log Y", "Quadratic", "Cubic", "Full", "w/o Exam.", "Interact", "Int. / Log", "Dummy", "Dummy Full"),
+          add.lines = list(c("Model", "Linear", "Log Y", "Quadratic", "Cubic", "Full", "w/o Exam.", "Interact", "Int. / Log Y", "Dummy", "Dummy Full"),
                            c("AIC", round(AIC(reg_simple), 1), "", round(AIC(reg_simple2), 1), round(AIC(reg_simple3), 1), round(AIC(reg_full), 1), round(AIC(reg_woEx), 1), round(AIC(reg_interact), 1), "", round(AIC(reg_simple_Dummy), 1), round(AIC(reg_woEx_Dummy), 1)),
                            c("BIC", round(BIC(reg_simple), 1), "", round(BIC(reg_simple2), 1), round(BIC(reg_simple3), 1), round(BIC(reg_full), 1), round(BIC(reg_woEx), 1), round(BIC(reg_interact), 1), "", round(BIC(reg_simple_Dummy), 1), round(BIC(reg_woEx_Dummy), 1))),
-          notes = "SE provided in paranthesis",
+          notes = "SE provided in parentheses",
           results = "asis")
 
 ## Shortened table for paper ##
@@ -452,7 +462,7 @@ stargazer(reg_simple, reg_simple3, reg_full, reg_woEx, reg_interact, reg_woEx_Du
           add.lines = list(c("AIC", round(AIC(reg_simple), 1), round(AIC(reg_simple3), 1), round(AIC(reg_full), 1), round(AIC(reg_woEx), 1), round(AIC(reg_interact), 1), round(AIC(reg_woEx_Dummy), 1))),
           omit.stat = c("rsq", "n", "ser"),
           df = F,
-          notes = "Based on 47 observations. SE provided in paranthesis",
+          notes = "Based on 47 observations. SE provided in parentheses",
           results = "asis")
 
 
@@ -520,9 +530,10 @@ print(coef_lasso2) #From a visual inspection, this does not seem to add any addi
 ################### Additional visualizations of plots ############################
 ###################################################################################
 
-#### Another way of plotting the correlation matrix ####
+#### Other ways of plotting the correlation matrix ####
 corrplot(cor(mydata), method = "color")
-
+pairs(mydata, upper.panel = NULL, pch = 20, cex = 1.25) # assumption: linear relationship between Education and Examination/Examination and Agriculture 
+levelplot(cor(mydata), xlab = "", ylab = "") # visible correlation between Fertility and Education & Examination. Also, highly negative correlation between Education and Agriculture
 
 #### Mapping relationships between different variables IV und DV (with simple regression model) ####
 ## Relationship Agriculture Fertility ##
