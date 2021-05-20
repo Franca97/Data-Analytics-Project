@@ -63,13 +63,15 @@ attach(mydata)
 #### Getting a general overview of the data #### 
 summary(mydata) # Catholic: Median and Mean are completely different, also high sd (41)
 stargazer(mydata, 
-          type = "html", 
-          nobs = FALSE, 
-          style = "aer", 
-          iqr = FALSE , 
+          type = "html",
+          out = "SummaryStatistics.html",
+          nobs = FALSE,
+          style = "aer",
+          iqr = FALSE,
           title = "Table 1 - Swiss Fertility Summary Statistics", 
-          digits = 2, 
-          out = "Summary Statistics")
+          digits = 2,
+          median = TRUE,
+          results = "asis")
 
 
 #### Drawing a simple boxplot for first inspection ####
